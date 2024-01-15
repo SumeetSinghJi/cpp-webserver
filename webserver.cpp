@@ -5,12 +5,21 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <unistd.h>
+#pragma comment(lib, "ws2_32.lib")
+#pragma comment(lib, "libssl.lib")
+#pragma comment(lib, "libcrypto.lib")
 #endif
 #include <string>
 #include <vector>
 #include <sstream>
+#include <openssl/ssl.h> // for SSL
+#include <openssl/err.h> // for SSL
+#include <fstream>       // for output file
+#include <filesystem>    // for getenv for output file to correct environemnt
+#include <chrono>        // for timestamping logs
 
 /* TO DO
+ * Implement header sanitisation to prevent XSS
  * secure socket operations
  * Enable https using (SSL/TLS) create a cert
  * Content Security Policy (CSP)
@@ -154,6 +163,7 @@ public:
                 // You may use a library or implement your own logic to sanitize headers
                 // For simplicity, we just print the headers in this example
                 std::cout << "Header: " << header << std::endl;
+                output_logs(header);
             } // end security - XSS header validation sanitising
 
             // Response to Client browser
@@ -198,6 +208,45 @@ public:
 #ifdef _WIN32
         WSACleanup();
 #endif
+    };
+
+    void output_logs(const std::string &header)
+    {
+        std::string logPath = "";
+        std::string home_directory = "";
+
+        // Determine the platform-specific file path separator
+        std::string filepath_separator;
+#ifdef _WIN32
+        filepath_separator = '\\';
+        home_directory = getenv("USERPROFILE");
+#else
+        filepath_separator = '/';
+        home_directory = getenv("HOME");
+#endif
+
+        // Construct the log file path
+        logPath = home_directory + filepath_separator + "logs.txt";
+
+        // Get the current time
+        auto currentTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+
+        // Open the log file in append mode
+        std::ofstream outputFile(logPath, std::ios_base::app);
+
+        // Check if the file is successfully opened
+        if (outputFile.is_open())
+        {
+            // Write the timestamp and header to the file
+            outputFile << "[" << std::put_time(std::localtime(&currentTime), "%Y-%m-%d %H:%M:%S") << "] " << header << std::endl;
+
+            // Close the file
+            outputFile.close();
+        }
+        else
+        {
+            std::cerr << "Error: Unable to open log file for writing." << std::endl;
+        }
     };
 
     bool isValidIPAddress(const std::string &ipAddress)

@@ -7,12 +7,15 @@
             "args": [
                 "-fdiagnostics-color=always",
                 "-I${fileDirname}",
+                "-IC:/Program Files/OpenSSL-Win64/include/openssl", // for OpenSSL
                 "-g",
                 "${file}", // uncomment for only building main.cpp
                 // "${fileDirname}/*.cpp", // uncomment for combining all .cpp files
                 "-o",
                 "${fileDirname}\\${fileBasenameNoExtension}.exe",
-                "-lws2_32" // For webserver.cpp winsock.h only. Not needed in production.
+                "-lws2_32", // For webserver.cpp winsock.h only. Not needed in production.
+                "-lssl",    // Link against OpenSSL library
+                "-lcrypto"  // Link against OpenSSL Crypto library
             ],
             "options": {
                 "cwd": "${fileDirname}"
