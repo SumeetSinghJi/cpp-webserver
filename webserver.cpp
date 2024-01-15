@@ -20,7 +20,6 @@
 
 /* TO DO
  * Implement header sanitisation to prevent XSS
- * secure socket operations
  * Enable https using (SSL/TLS) create a cert
  * Content Security Policy (CSP)
  */
@@ -44,6 +43,11 @@ private:
     std::string clientIPAddress = "";
     int clientPortNumber = 0;
     int bytesReceived = 0;
+
+    std::unique_ptr<SSL_CTX, decltype(&SSL_CTX_free)> sslContext{
+        SSL_CTX_new(SSLv23_server_method()), &SSL_CTX_free
+    };
+
 
 public:
     SUMEETS_WEBSERVER(const std::string &ipAddress, int portNumber) : BUFFER_SIZE(30720), clientIPAddress(ipAddress), clientPortNumber(portNumber) {}
