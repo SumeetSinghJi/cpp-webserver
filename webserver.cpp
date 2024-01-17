@@ -22,6 +22,7 @@
  * Implement header sanitisation to prevent XSS
  * Enable https using (SSL/TLS) create a cert
  * Content Security Policy (CSP)
+ * Serve static webpage
  */
 
 class SUMEETS_WEBSERVER
