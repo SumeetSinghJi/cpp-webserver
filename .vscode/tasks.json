@@ -9,8 +9,8 @@
                 "-I${fileDirname}",
                 "-IC:/Program Files/OpenSSL-Win64/include/openssl", // for OpenSSL
                 "-g",
-                "${file}", // uncomment for only building main.cpp
-                // "${fileDirname}/*.cpp", // uncomment for combining all .cpp files
+                // "${file}", // uncomment for only building main.cpp
+                "${fileDirname}/*.cpp", // uncomment for combining all .cpp files
                 "-o",
                 "${fileDirname}\\${fileBasenameNoExtension}.exe",
                 "-lws2_32", // For webserver.cpp winsock.h only. Not needed in production.
