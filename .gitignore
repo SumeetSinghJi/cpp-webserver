@@ -1,0 +1,5 @@
+
+# Directories to ignore
+./src/asio/build
+
+# Files to ignore

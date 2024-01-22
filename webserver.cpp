@@ -21,9 +21,10 @@
 /* TO DO
  * Enable https using OpenSSL (SSL/TLS) create a cert
  * Content Security Policy (CSP)
+ * use #include <boost/asio.hpp> for Asynchronous concurrent connctions instances of web server:
  */
 
-class SUMEETS_WEBSERVER
+class lightweight_cpp_webserver
 {
 private:
 #ifdef _WIN32
@@ -49,7 +50,7 @@ private:
         SSL_CTX_new(SSLv23_server_method()), &SSL_CTX_free};
 
 public:
-    SUMEETS_WEBSERVER(const std::string &ipAddress, int portNumber) : BUFFER_SIZE(30720), clientIPAddress(ipAddress), clientPortNumber(portNumber) {}
+    lightweight_cpp_webserver(const std::string &ipAddress, int portNumber) : BUFFER_SIZE(30720), clientIPAddress(ipAddress), clientPortNumber(portNumber) {}
 
     void setIPAddress(const std::string &ipAddress)
     {
@@ -424,7 +425,7 @@ public:
 
 int main()
 {
-    SUMEETS_WEBSERVER server("127.0.0.1", 8080);
+    lightweight_cpp_webserver server("127.0.0.1", 8080);
     if (server.initialise_web_server())
     {
         server.run_web_server();
