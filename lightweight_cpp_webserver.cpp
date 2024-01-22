@@ -15,10 +15,7 @@
 
 // Constructor definition
 lightweight_cpp_webserver::lightweight_cpp_webserver(const std::string &ipAddress, int portNumber)
-    : BUFFER_SIZE(30720), clientIPAddress(ipAddress), clientPortNumber(portNumber)
-{
-    // constructor logic here
-}
+    : BUFFER_SIZE(30720), clientIPAddress(ipAddress), clientPortNumber(portNumber){}
 
 void lightweight_cpp_webserver::setIPAddress(const std::string &ipAddress)
 {
