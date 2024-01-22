@@ -14,7 +14,7 @@
 #include <sstream>
 #include <openssl/ssl.h> // for SSL
 #include <openssl/err.h> // for SSL
-#include <fstream>       // for output file
+#include <fstream>       // for output file/serving .html files  to client browser
 #include <filesystem>    // for getenv for output file to correct environemnt
 #include <chrono>        // for timestamping logs
 
@@ -44,11 +44,10 @@ private:
     std::string clientIPAddress = "";
     int clientPortNumber = 0;
     int bytesReceived = 0;
+    std::string logPath = "";
 
     std::unique_ptr<SSL_CTX, decltype(&SSL_CTX_free)> sslContext{
-        SSL_CTX_new(SSLv23_server_method()), &SSL_CTX_free
-    };
-
+        SSL_CTX_new(SSLv23_server_method()), &SSL_CTX_free};
 
 public:
     SUMEETS_WEBSERVER(const std::string &ipAddress, int portNumber) : BUFFER_SIZE(30720), clientIPAddress(ipAddress), clientPortNumber(portNumber) {}
@@ -115,6 +114,7 @@ public:
         {
             std::cout << "Error: Could not listen to anything on address: " << clientIPAddress << ":" << clientPortNumber << std::endl;
         }
+        std::cout << "Web server created successfully." << std::endl;
         return true;
     }
 
@@ -133,15 +133,22 @@ public:
             {
                 std::cout << "Error: Unable to accept client request: \n"
                           << std::endl;
+                closesocket(serverSocket);
+#ifdef _WIN32
+                WSACleanup();
+#endif
+                break;
             }
+            std::cout << "Accepted client request successfully." << std::endl;
 
             // read request
             char buff[30720] = {0};
             bytesReceived = recv(newServerSocket, buff, BUFFER_SIZE, 0);
             if (bytesReceived < 0)
             {
-                std::cout << "Error: Could not read client request" << std::endl;
+                std::cout << "Error: Could not read client request/possible client disconnect" << std::endl;
             }
+            std::cout << "Read client request successfully." << std::endl;
 
             // Security - Validate headers to prevent XSS attacks
             std::istringstream requestStream(buff); // from buff - from read request above
@@ -150,6 +157,7 @@ public:
             // read request line
             std::getline(requestStream, requestLine);
             // read headers
+            std::cout << "Reading headers from client request" << std::endl;
             while (true)
             {
                 std::string header;
@@ -169,90 +177,64 @@ public:
                 // For simplicity, we just print the headers in this example
                 std::cout << "Header: " << header << std::endl;
                 output_logs(header);
-            } // end security - XSS header validation sanitising
-
-            // Response to Client browser
-            std::string serverMessage = "HTTP/1.1 200 OK\n"
-                                        "Content-Type: text/html\n"
-                                        "Content-Length: ";
-            std::string response = "<html><h1>Hello world</h1></html>";
-            serverMessage.append(std::to_string(response.size()));
-            serverMessage.append("\n\n");
-            serverMessage.append(response);
-
-            // Tracking if the size of the response sent to client when they view web server from web browser, matches total response size
-            int bytesSent = 0;
-            int totalBytesSent = 0;
-            const char *responseBuffer = serverMessage.c_str(); // Pointer to the beginning of the response
-
-            while (totalBytesSent < serverMessage.size())
-            {
-                /*
-                Security - Prevent Buffer overflow attacks with Buffer size limit
-                static cast std::min to ensure we don't send more than remaining bytes
-                */
-                bytesSent = send(newServerSocket, responseBuffer + totalBytesSent, static_cast<int>(std::min<int>(BUFFER_SIZE, serverMessage.size() - totalBytesSent)), 0);
-
-                if (bytesSent <= 0)
-                {
-                    std::cout << "Error: Couldn't send response" << std::endl;
-                    break; // Break out of the loop on send error
-                }
-
-                totalBytesSent += bytesSent;
             }
+            std::cout << "Client request headers logged successfully here: " + logPath << std::endl;
+            // end security - XSS header validation sanitising
 
-            if (totalBytesSent != serverMessage.size())
+            // Extract the requested path from the request line
+            std::istringstream requestLineStream(requestLine);
+            std::string method, path, protocol;
+            requestLineStream >> method >> path >> protocol;
+
+            // Determine the corresponding page based on the URL
+            std::cout << "Finding path of page requested: " + path << std::endl;
+            std::string requestedPage = get_requested_page(path);
+
+            // Handle static file requests
+            if (method == "GET" && requestedPage != "")
             {
-                std::cout << "Error: Full response from server not sent to client. Byte size mismatch" << std::endl;
+                std::cout << "Starting serving static webpage .html response to Client browser" << std::endl;
+                handle_static_file_request(requestedPage);
+            }
+            else
+            {
+                // Serve a 404 error page
+                serve_error_page("404 Not Found", "error.html");
             }
             closesocket(newServerSocket);
+            std::cout << "Closing browser response socket succesfully." << std::endl;
         }
 
         closesocket(serverSocket);
 #ifdef _WIN32
         WSACleanup();
 #endif
+        std::cout << "Closing client request socket succesfully." << std::endl;
+        std::cout << "Web server terminated successfully." << std::endl;
+        return true;
     };
 
-    void output_logs(const std::string &header)
+    bool accept_client_request()
     {
-        std::string logPath = "";
-        std::string home_directory = "";
-
-        // Determine the platform-specific file path separator
-        std::string filepath_separator;
 #ifdef _WIN32
-        filepath_separator = '\\';
-        home_directory = getenv("USERPROFILE");
+        newServerSocket = accept(serverSocket, (SOCKADDR *)&server, &server_len);
 #else
-        filepath_separator = '/';
-        home_directory = getenv("HOME");
+        newServerSocket = accept(serverSocket, (struct sockaddr *)&server, &server_len);
 #endif
 
-        // Construct the log file path
-        logPath = home_directory + filepath_separator + "logs.txt";
-
-        // Get the current time
-        auto currentTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-
-        // Open the log file in append mode
-        std::ofstream outputFile(logPath, std::ios_base::app);
-
-        // Check if the file is successfully opened
-        if (outputFile.is_open())
+        if (newServerSocket == INVALID_SOCKET)
         {
-            // Write the timestamp and header to the file
-            outputFile << "[" << std::put_time(std::localtime(&currentTime), "%Y-%m-%d %H:%M:%S") << "] " << header << std::endl;
-
-            // Close the file
-            outputFile.close();
+            std::cout << "Error: Unable to accept client request: \n"
+                      << std::endl;
+            closesocket(serverSocket);
+#ifdef _WIN32
+            WSACleanup();
+#endif
+            return false;
         }
-        else
-        {
-            std::cerr << "Error: Unable to open log file for writing." << std::endl;
-        }
-    };
+        std::cout << "Accepted client request successfully." << std::endl;
+        return true;
+    }
 
     bool isValidIPAddress(const std::string &ipAddress)
     {
@@ -289,6 +271,158 @@ public:
         }
         return false;
     };
+
+    void output_logs(const std::string &header)
+    {
+        std::string home_directory = "";
+
+        // Determine the platform-specific file path separator
+        std::string filepath_separator;
+#ifdef _WIN32
+        filepath_separator = '\\';
+        home_directory = getenv("USERPROFILE");
+#else
+        filepath_separator = '/';
+        home_directory = getenv("HOME");
+#endif
+
+        // Construct the log file path
+        logPath = home_directory + filepath_separator + "logs.txt";
+
+        // Get the current time
+        auto currentTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+
+        // Open the log file in append mode
+        std::ofstream outputFile(logPath, std::ios_base::app);
+
+        // Check if the file is successfully opened
+        if (outputFile.is_open())
+        {
+            // Write the timestamp and header to the file
+            outputFile << "[" << std::put_time(std::localtime(&currentTime), "%Y-%m-%d %H:%M:%S") << "] " << header << std::endl;
+
+            // Close the file
+            outputFile.close();
+        }
+        else
+        {
+            std::cerr << "Error: Unable to open log file for writing." << std::endl;
+        }
+    };
+
+    void send_response(int socket, const std::string &response)
+    {
+        // Tracking if the size of the response sent to client when they view web server from web browser, matches total response size
+        int bytesSent = 0;
+        int totalBytesSent = 0;
+        const char *responseBuffer = response.c_str(); // Pointer to the beginning of the response
+
+        while (totalBytesSent < response.size())
+        {
+            /*
+            Security - Prevent Buffer overflow attacks with Buffer size limit
+            static cast std::min to ensure we don't send more than remaining bytes
+            */
+            bytesSent = send(socket, responseBuffer + totalBytesSent, static_cast<int>(std::min<int>(BUFFER_SIZE, response.size() - totalBytesSent)), 0);
+
+            if (bytesSent <= 0)
+            {
+                std::cout << "Error: Couldn't send response" << std::endl;
+                break; // Break out of the loop on send error
+            }
+
+            totalBytesSent += bytesSent;
+        }
+
+        if (totalBytesSent != response.size())
+        {
+            std::cout << "Error: Full response from server not sent to client. Byte size mismatch" << std::endl;
+        }
+        closesocket(socket);
+    }
+
+    std::string get_requested_page(const std::string &url)
+    {
+        // server index.html on root: 172.0.0.1:8080
+        if (url == "/")
+        {
+            return "index.html";
+        }
+        else if (url == "/homepage")
+        {
+            // Example: If the URL is "/homepage", return "homepage.html"
+            return "homepage.html";
+        }
+        // Add more conditions based on your URL mapping
+        // ...
+        else
+        {
+            // If no specific page is matched, return the URL path relative to "website/"
+            std::cout << "Page: " + url + " , Missing. Server default error.html page." << std::endl;
+            return url.substr(1); // Remove the leading "/"
+        }
+    }
+
+    std::string read_static_html_file(std::string filePath)
+    {
+        /*
+            This code is for reading a index.html file and serving it to the clients browser
+            It will use any linked files e.g. .css and .js for display/logic
+            It will also serve links
+        */
+        std::cout << "Attempting to read file: " << filePath << std::endl;
+
+        std::ifstream file(filePath);
+        if (file)
+        {
+            std::string content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+            return content;
+        }
+        else
+        {
+            std::cerr << "Error: Could not open file: " << filePath << std::endl;
+            return "";
+        }
+    }
+
+    void handle_static_file_request(const std::string &requestedPage)
+    {
+        std::cout << "Starting serving static webpage .html response to Client browser" << std::endl;
+        std::string filePath = "website/" + requestedPage;
+        std::string fileContent = read_static_html_file(filePath);
+
+        if (!fileContent.empty())
+        {
+            std::string response = "HTTP/1.1 200 OK\n"
+                                   "Content-Type: text/html\n"
+                                   "Content-Length: " +
+                                   std::to_string(fileContent.size()) + "\n\n" + fileContent;
+
+            // Send the static file as the response
+            send_response(newServerSocket, response);
+            std::cout << "Sent response static webpage .html to Client browser successfully." << std::endl;
+        }
+    }
+
+    void serve_error_page(const std::string &statusCode, const std::string &errorPage)
+    {
+        // Serve an error page
+        std::string errorFilePath = "website/" + errorPage;
+        std::string errorFileContent = read_static_html_file(errorFilePath);
+
+        if (!errorFileContent.empty())
+        {
+            std::string errorResponse = "HTTP/1.1 " + statusCode + "\n"
+                                                                   "Content-Type: text/html\n"
+                                                                   "Content-Length: " +
+                                        std::to_string(errorFileContent.size()) + "\n\n" + errorFileContent;
+
+            // Send the error page as the response
+            send_response(newServerSocket, errorResponse);
+            std::cout << "Finished sending response " + errorPage + " to Client browser." << std::endl;
+            std::cout << "Closing client request socket." << std::endl;
+        }
+    }
 };
 
 int main()
