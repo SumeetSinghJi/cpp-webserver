@@ -45,6 +45,7 @@ private:
     int clientPortNumber = 0;
     int bytesReceived = 0;
     std::string logPath = "";
+    char buff[30720] = {0};
 
     std::unique_ptr<SSL_CTX, decltype(&SSL_CTX_free)> sslContext{
         SSL_CTX_new(SSLv23_server_method()), &SSL_CTX_free};
@@ -122,27 +123,13 @@ public:
     {
         while (true)
         {
-// accept client request
-#ifdef _WIN32
-            newServerSocket = accept(serverSocket, (SOCKADDR *)&server, &server_len);
-#else
-            newServerSocket = accept(serverSocket, (struct sockaddr *)&server, &server_len);
-#endif
-
-            if (newServerSocket == INVALID_SOCKET)
+            // Accept client request
+            if (!accept_client_request())
             {
-                std::cout << "Error: Unable to accept client request: \n"
-                          << std::endl;
-                closesocket(serverSocket);
-#ifdef _WIN32
-                WSACleanup();
-#endif
                 break;
             }
-            std::cout << "Accepted client request successfully." << std::endl;
 
             // read request
-            char buff[30720] = {0};
             bytesReceived = recv(newServerSocket, buff, BUFFER_SIZE, 0);
             if (bytesReceived < 0)
             {
