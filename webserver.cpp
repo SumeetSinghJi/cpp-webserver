@@ -19,10 +19,8 @@
 #include <chrono>        // for timestamping logs
 
 /* TO DO
- * Implement header sanitisation to prevent XSS
- * Enable https using (SSL/TLS) create a cert
+ * Enable https using OpenSSL (SSL/TLS) create a cert
  * Content Security Policy (CSP)
- * Serve static webpage
  */
 
 class SUMEETS_WEBSERVER
@@ -45,7 +43,7 @@ private:
     int clientPortNumber = 0;
     int bytesReceived = 0;
     std::string logPath = "";
-    char buff[30720] = {0};
+    std::string requestLine;
 
     std::unique_ptr<SSL_CTX, decltype(&SSL_CTX_free)> sslContext{
         SSL_CTX_new(SSLv23_server_method()), &SSL_CTX_free};
@@ -129,44 +127,13 @@ public:
                 break;
             }
 
-            // read request
-            bytesReceived = recv(newServerSocket, buff, BUFFER_SIZE, 0);
-            if (bytesReceived < 0)
-            {
-                std::cout << "Error: Could not read client request/possible client disconnect" << std::endl;
-            }
-            std::cout << "Read client request successfully." << std::endl;
-
-            // Security - Validate headers to prevent XSS attacks
-            std::istringstream requestStream(buff); // from buff - from read request above
-            std::string requestLine;
+            // Read and validate headers
             std::vector<std::string> headers;
-            // read request line
-            std::getline(requestStream, requestLine);
-            // read headers
-            std::cout << "Reading headers from client request" << std::endl;
-            while (true)
+            if (!read_and_validate_headers(headers))
             {
-                std::string header;
-                std::getline(requestStream, header);
-                // break when we encounter an empty line endicating end of headers
-                if (header.empty())
-                {
-                    break;
-                }
-                headers.push_back(header);
+                closesocket(newServerSocket);
+                continue;
             }
-            // validate and sanitise headers to prevent XSS attacks
-            for (const auto &header : headers)
-            {
-                // Perform header validation and sanitization logic here
-                // You may use a library or implement your own logic to sanitize headers
-                // For simplicity, we just print the headers in this example
-                std::cout << "Header: " << header << std::endl;
-                output_logs(header);
-            }
-            std::cout << "Client request headers logged successfully here: " + logPath << std::endl;
-            // end security - XSS header validation sanitising
 
             // Extract the requested path from the request line
             std::istringstream requestLineStream(requestLine);
@@ -200,6 +167,49 @@ public:
         std::cout << "Web server terminated successfully." << std::endl;
         return true;
     };
+
+    bool read_and_validate_headers(std::vector<std::string> &headers)
+    {
+        // Read and validate headers
+        char buff[30720] = {0};
+        bytesReceived = recv(newServerSocket, buff, BUFFER_SIZE, 0);
+        if (bytesReceived < 0)
+        {
+            std::cout << "Error: Could not read client request/possible client disconnect" << std::endl;
+            return false;
+        }
+        std::cout << "Read client request successfully." << std::endl;
+
+        // Security - Validate headers to prevent XSS attacks
+        std::istringstream requestStream(buff);
+        // read request line
+        std::getline(requestStream, requestLine);
+        // read headers
+        std::cout << "Reading headers from client request" << std::endl;
+        while (true)
+        {
+            std::string header;
+            std::getline(requestStream, header);
+            // break when we encounter an empty line indicating end of headers
+            if (header.empty())
+            {
+                break;
+            }
+            headers.push_back(header);
+        }
+        // validate and sanitize headers to prevent XSS attacks
+        for (const auto &header : headers)
+        {
+            // Perform header validation and sanitization logic here
+            // You may use a library or implement your own logic to sanitize headers
+            // For simplicity, we just print the headers in this example
+            std::cout << "Header: " << header << std::endl;
+            output_logs(header);
+        }
+        std::cout << "Client request headers logged successfully here: " + logPath << std::endl;
+        // end security - XSS header validation sanitizing
+        return true;
+    }
 
     bool accept_client_request()
     {
