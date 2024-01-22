@@ -1,3 +1,11 @@
+/*
+    Author: Sumeet Singh
+    Dated: 22/01/2024
+    File: Main source code
+    Purpose: A Lightweight C++ class free to use
+    Description: read the attached README.md file
+*/
+
 #include <iostream>
 #ifdef _WIN32
 #include <winsock2.h>
@@ -22,6 +30,7 @@
  * Enable https using OpenSSL (SSL/TLS) create a cert
  * Content Security Policy (CSP)
  * use #include <boost/asio.hpp> for Asynchronous concurrent connctions instances of web server:
+ * SANDBOX - Possibly expand using enet to create a multiplayer capable server
  */
 
 class lightweight_cpp_webserver
