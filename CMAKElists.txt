@@ -2,6 +2,10 @@ cmake_minimum_required(VERSION 3.0)
 
 project(cpp-webserver)
 
+set(CMAKE_LIBRARIES_DIR
+    "-lws2_32"
+)
+
 set(SOURCES 
     main.cpp
     lightweight_cpp_webserver.cpp
@@ -15,3 +19,4 @@ include_directories(
 add_executable(cpp-webserver ${SOURCES})
 
 target_include_directories(cpp-webserver PRIVATE "${CMAKE_SOURCE_DIR}/headers")
+target_link_libraries(cpp-webserver PRIVATE "${CMAKE_LIBRARIES_DIR}")
