@@ -10,6 +10,7 @@
  * Enable https using OpenSSL (SSL/TLS) create a cert
  * Content Security Policy (CSP)
  * use #include <boost/asio.hpp> for Asynchronous concurrent connctions instances of web server:
+ * Build CMAKE using headers/extra source files and main etc.,
  * SANDBOX - Possibly expand using enet to create a multiplayer capable server
  */
 
