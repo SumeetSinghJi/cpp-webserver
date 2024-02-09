@@ -9,9 +9,8 @@ Sumeet Singh
 ## Description
 Lightweight C++ web server library for serving requests with webpages.
 
-
 ## License
-Code open source written by Author, however third party library code is subject to their own licensing
+MIT License
 
 
 ## Requirements
@@ -25,6 +24,7 @@ Minimum C++ Standard: C++11
 Executable/Binary can be created with CMake. 
 
 e.g. Windows OS, using MinGW64;
+
 Run both commands in terminal after each other in the ./build folder
 
 ```cpp
@@ -44,10 +44,7 @@ mingw32-make VERBOSE=1
 
 ## Example
 1. In handle_static_file_request() and serve_error_page() replace string ".website-example/" 
-with a directory containing new website.
-
-String ".website-example/" represents a example directory that hosts example website that is
-loaded by default. Replace this string with any directory to load webpages within 
+with a directory containing new website. String ".website-example/" represents a example directory that hosts example website that is loaded by default. Replace this string with any directory to load webpages within 
 
 2. In get_requested_page() replace strings "index.html" and "homepage.html" with desired
 webpage for required website.
