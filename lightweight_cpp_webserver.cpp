@@ -7,6 +7,9 @@
 #include "headers/lightweight_cpp_webserver.hpp" // function and class declarations
 
 /* TO DO
+ * Allow any IP or socket to browse to website (but still keep the range validation check below)
+ * Test WASM website
+ * Update readme with steps for use + wasm use
  * Enable https using OpenSSL (SSL/TLS) create a cert
  * Content Security Policy (CSP)
  * use #include <boost/asio.hpp> for Asynchronous concurrent connctions instances of web server:
@@ -321,7 +324,7 @@ std::string lightweight_cpp_webserver::get_requested_page(const std::string &url
     // ...
     else
     {
-        // If no specific page is matched, return the URL path relative to "website/"
+        // If no specific page is matched, return the URL path relative to "website-example/"
         std::cout << "Page: " + url + " , Missing. Server default error.html page." << std::endl;
         return url.substr(1); // Remove the leading "/"
     }
@@ -352,7 +355,7 @@ std::string lightweight_cpp_webserver::read_static_html_file(std::string filePat
 void lightweight_cpp_webserver::handle_static_file_request(const std::string &requestedPage)
 {
     std::cout << "Starting serving static webpage .html response to Client browser" << std::endl;
-    std::string filePath = "website/" + requestedPage;
+    std::string filePath = "website-example/" + requestedPage;
     std::string fileContent = read_static_html_file(filePath);
 
     if (!fileContent.empty())
@@ -371,7 +374,7 @@ void lightweight_cpp_webserver::handle_static_file_request(const std::string &re
 void lightweight_cpp_webserver::serve_error_page(const std::string &statusCode, const std::string &errorPage)
 {
     // Serve an error page
-    std::string errorFilePath = "website/" + errorPage;
+    std::string errorFilePath = "website-example/" + errorPage;
     std::string errorFileContent = read_static_html_file(errorFilePath);
 
     if (!errorFileContent.empty())

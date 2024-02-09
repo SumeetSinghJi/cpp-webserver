@@ -1,8 +1,13 @@
 ## C++ Webserver
 
-## Author: Sumeet Singh
-## Dated: 22/01/2024
-## Description: Lightweight C++ web server class that can be imported into any code. loads webpages.
+## Author
+Sumeet Singh
+
+## Dated
+22/01/2024
+
+## Description
+Lightweight C++ web server library for serving requests with webpages.
 
 
 ## License
@@ -13,11 +18,14 @@ Code open source written by Author, however third party library code is subject 
 Minimum C++ Standard: C++11
 * PENDING - Uses "Win64 OpenSSL v3.2.0" found here: https://slproweb.com/products/Win32OpenSSL.html
 * PENDING - Uses "boost.asio" found here: https://github.com/boostorg/asio
+* OPTIONAL - CMake - to build the executable/binary if desired
 
 
 ## Installation
-Executable/Binary can be created with CMake. Run both commands after each other in the ./build folder
-in terminal.
+Executable/Binary can be created with CMake. 
+
+e.g. Windows OS, using MinGW64;
+Run both commands in terminal after each other in the ./build folder
 
 ```cpp
 cmake .. -G "MinGW Makefiles"
@@ -25,17 +33,27 @@ mingw32-make VERBOSE=1
 ```
 
 ## Files
-./src - Contains custom and/or third party libraries
-./website - files serving static page
-./headers - headers files for class and function declarations
-lightweight_cpp_webserver.cpp - Implementation file
-main.cpp - main file with example on how to initialise class
+* ./src - Contains custom and/or third party libraries
+* ./website-example - Default example website and webpage files serving static page
+* ./wasm-example - Default example C++ WebAssembly files (.html, .js, .wasm) for testing
+* ./headers - headers files for class and function declarations
+* lightweight_cpp_webserver.cpp - Implementation file
+* main.cpp - main file with example on how to initialise class
+* main.exe - Windows OS ready executable
 
 
 ## Example
-Read main.cpp file for example on how to initialise the lightweight c++ web server
-You can test with running main.exe and browsing to 127.0.0.1:8080 on same device
+1. In handle_static_file_request() and serve_error_page() replace string ".website-example/" 
+with a directory containing new website.
 
+String ".website-example/" represents a example directory that hosts example website that is
+loaded by default. Replace this string with any directory to load webpages within 
 
-## Methodology
-1. PENDING
+2. In get_requested_page() replace strings "index.html" and "homepage.html" with desired
+webpage for required website.
+
+3. Run the executable/binary main.exe
+
+4. From a client browser browse to localhost port 8080: 127.0.0.1:8080
+
+5. Webpage from Step 2 will load on browser.
