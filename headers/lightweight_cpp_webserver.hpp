@@ -20,6 +20,7 @@
 
 #ifdef _WIN32
 #include <winsock2.h>
+#include <WS2tcpip.h>
 #else
 #include <sys/socket.h>
 #include <arpa/inet.h>
@@ -43,13 +44,12 @@ private:
     struct sockaddr_in server;
     int server_len;
     int BUFFER_SIZE;
-    std::string clientIPAddress;
-    int clientPortNumber;
+    std::string webserverIPAddress;
+    int webserverPortNumber;
+    std::string clientIPAddress; // Extracted in run_web_server()
     int bytesReceived;
     std::string logPath;
     std::string requestLine;
-
-    // std::unique_ptr<SSL_CTX, decltype(&SSL_CTX_free)> sslContext;
 
 public:
     lightweight_cpp_webserver(const std::string &ipAddress, int portNumber);

@@ -7,10 +7,9 @@
 #include "headers/lightweight_cpp_webserver.hpp" // function and class declarations
 
 /* TO DO
- * Allow any IP or socket to browse to website (but still keep the range validation check below)
  * Test WASM website
  * Update readme with steps for use + wasm use
- * Enable https using OpenSSL (SSL/TLS) create a cert
+ * SSL
  * Content Security Policy (CSP)
  * use #include <boost/asio.hpp> for Asynchronous concurrent connctions instances of web server:
  * Build CMAKE using headers/extra source files and main etc.,
@@ -19,13 +18,16 @@
 
 // Constructor definition
 lightweight_cpp_webserver::lightweight_cpp_webserver(const std::string &ipAddress, int portNumber)
-    : BUFFER_SIZE(30720), clientIPAddress(ipAddress), clientPortNumber(portNumber){}
+    : BUFFER_SIZE(30720), webserverIPAddress(ipAddress), webserverPortNumber(portNumber)
+{
+}
 
 void lightweight_cpp_webserver::setIPAddress(const std::string &ipAddress)
 {
+    // Set the webserver IP address when initialised e.g; lightweight_cpp_webserver server("127.0.0.1", 8080);
     if (isValidIPAddress(ipAddress))
     {
-        this->clientIPAddress = ipAddress;
+        this->webserverIPAddress = ipAddress;
     }
     else
     {
@@ -35,9 +37,10 @@ void lightweight_cpp_webserver::setIPAddress(const std::string &ipAddress)
 
 void lightweight_cpp_webserver::setPortNumber(int portNumber)
 {
+    // Set the webserver Port number when initialised e.g; lightweight_cpp_webserver server("127.0.0.1", 8080);
     if (isValidPortAddress(portNumber))
     {
-        this->clientPortNumber = portNumber;
+        this->webserverPortNumber = portNumber;
     }
     else
     {
@@ -69,19 +72,33 @@ bool lightweight_cpp_webserver::initialise_web_server()
 
     // bind socket to address
     server.sin_family = AF_INET;
-    server.sin_addr.s_addr = inet_addr(clientIPAddress.c_str());
-    server.sin_port = htons(clientPortNumber);
+    server.sin_addr.s_addr = inet_addr(webserverIPAddress.c_str());
+    server.sin_port = htons(webserverPortNumber);
     server_len = sizeof(server);
 
+    /*
+        Server socket IP and Port assignmeent start with order of functions bind(), getsockname() listen()
+        all 3 are necessary
+        bind() checks if the initialised IP and Port number listed can be assigned by the Operating System
+        e.g; lightweight_cpp_webserver server("127.0.0.1", 8080);
+    */
     if (bind(serverSocket, (SOCKADDR *)&server, server_len) != 0)
     {
-        std::cout << "Error: Could not bind address: " << clientIPAddress << ":" << clientPortNumber << " to web socket" << std::endl;
+        std::cout << "Error: Could not bind IP address: " << webserverIPAddress << ":" << webserverPortNumber << " to web server, web socket" << std::endl;
     }
 
-    // listen for address
-    if (listen(serverSocket, 20) != 0)
+    // Get the actual port number chosen by the OS after bind()
+    if (getsockname(serverSocket, (SOCKADDR *)&server, &server_len) == -1)
     {
-        std::cout << "Error: Could not listen to anything on address: " << clientIPAddress << ":" << clientPortNumber << std::endl;
+        std::cout << "Error: Could not get actual port number" << std::endl;
+        closesocket(serverSocket);
+        return false;
+    }
+
+    // listen is another check after getsockname()
+    if (listen(serverSocket, 20) != 0) // (serverSocket, 20) = 20 concurrent client connections
+    {
+        std::cout << "Error: Could not listen to anything on server address: " << webserverIPAddress << ":" << webserverPortNumber << std::endl;
     }
     std::cout << "Web server created successfully." << std::endl;
     return true;
@@ -188,7 +205,6 @@ bool lightweight_cpp_webserver::accept_client_request()
 #else
     newServerSocket = accept(serverSocket, (struct sockaddr *)&server, &server_len);
 #endif
-
     if (newServerSocket == INVALID_SOCKET)
     {
         std::cout << "Error: Unable to accept client request: \n"
@@ -200,6 +216,13 @@ bool lightweight_cpp_webserver::accept_client_request()
         return false;
     }
     std::cout << "Accepted client request successfully." << std::endl;
+
+    // Extract client IP address
+    char clientIPAddressChar[INET_ADDRSTRLEN];
+    inet_ntop(AF_INET, &(server.sin_addr), clientIPAddressChar, INET_ADDRSTRLEN);
+    clientIPAddress = std::string(clientIPAddressChar);
+    std::cout << "Client IP address is: " << clientIPAddress << std::endl;
+
     return true;
 }
 
@@ -265,8 +288,10 @@ void lightweight_cpp_webserver::output_logs(const std::string &header)
     // Check if the file is successfully opened
     if (outputFile.is_open())
     {
-        // Write the timestamp and header to the file
-        outputFile << "[" << std::put_time(std::localtime(&currentTime), "%Y-%m-%d %H:%M:%S") << "] " << header << std::endl;
+        // Write the timestamp, client IP, and header to the file
+        outputFile << "[" << std::put_time(std::localtime(&currentTime), "%Y-%m-%d %H:%M:%S") << "] "
+                   << "Client IP: " << clientIPAddress << " | "
+                   << header << std::endl;
 
         // Close the file
         outputFile.close();
