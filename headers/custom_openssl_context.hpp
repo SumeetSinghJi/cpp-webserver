@@ -8,7 +8,6 @@
     Dated: 12/02/2024
     File: Declaration file
     Minimum C++ Standard: C++11
-    License: Uses OpenSSL License
 */
 
 class custom_openssl_context {
@@ -53,6 +52,8 @@ public:
         // Optionally, configure additional SSL options
         // For example:
         // SSL_CTX_set_options(ssl_ctx, SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3);
+
+        std::cout << "SSL webserver .cer and .key pair loaded successfuly" << std::cout;
 
         return true;
     }

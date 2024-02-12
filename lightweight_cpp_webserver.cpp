@@ -2,27 +2,21 @@
     Author: Sumeet Singh
     Dated: 22/01/2024
     Minimum C++ Standard: C++11
+    Purpose: Definition file
 */
 
-#include "headers/lightweight_cpp_webserver.hpp" // function and class declarations
+#include "headers/lightweight_cpp_webserver.hpp" // function and class declarations file
 
 /* TO DO
  * Make the directory for website folder a private member and constructor parameter
- for easy front loading of website, include steps in readme
- * Test WASM website
- * Update readme with steps for use + wasm use
- * SSL
+ * SSL setup
  * Content Security Policy (CSP)
- * use #include <boost/asio.hpp> for Asynchronous concurrent connctions instances of web server:
- * Build CMAKE using headers/extra source files and main etc.,
- * SANDBOX - Possibly expand using enet to create a multiplayer capable server
+ * use #include <boost/asio.hpp> for Asynchronous
  */
 
 // Constructor definition
 lightweight_cpp_webserver::lightweight_cpp_webserver(const std::string &ipAddress, int portNumber)
-    : BUFFER_SIZE(30720), webserverIPAddress(ipAddress), webserverPortNumber(portNumber)
-{
-}
+    : BUFFER_SIZE(30720), webserverIPAddress(ipAddress), webserverPortNumber(portNumber){}
 
 void lightweight_cpp_webserver::setIPAddress(const std::string &ipAddress)
 {

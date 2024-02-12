@@ -10,8 +10,9 @@ Sumeet Singh
 Lightweight C++ web server library for serving requests with webpages.
 
 ## License
-Main Source code - MIT License
-OpenSSL code - Opensource License
+This project is licensed under the MIT License. See the full license text in the `full_license.txt` file.
+
+Note: This project includes components from OpenSSL, which is licensed under the Apache License. See the `license.txt` file for details on the Apache License.
 
 
 ## Requirements
