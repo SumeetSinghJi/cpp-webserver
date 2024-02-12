@@ -10,7 +10,8 @@ Sumeet Singh
 Lightweight C++ web server library for serving requests with webpages.
 
 ## License
-MIT License
+Main Source code - MIT License
+OpenSSL code - Opensource License
 
 
 ## Requirements

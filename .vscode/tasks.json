@@ -13,9 +13,9 @@
                 "${fileDirname}/*.cpp", // uncomment for combining all .cpp files
                 "-o",
                 "${fileDirname}\\${fileBasenameNoExtension}.exe",
-                "-lws2_32", // For webserver.cpp winsock.h only. Not needed in production.
-                "-lssl",    // Link against OpenSSL library
-                "-lcrypto"  // Link against OpenSSL Crypto library
+                "-lws2_32", // <winsock.h>
+                "-lssl",    // OpenSSL
+                "-lcrypto"  // OpenSSL
             ],
             "options": {
                 "cwd": "${fileDirname}"
