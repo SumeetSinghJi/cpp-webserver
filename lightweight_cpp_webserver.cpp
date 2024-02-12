@@ -7,6 +7,8 @@
 #include "headers/lightweight_cpp_webserver.hpp" // function and class declarations
 
 /* TO DO
+ * Make the directory for website folder a private member and constructor parameter
+ for easy front loading of website, include steps in readme
  * Test WASM website
  * Update readme with steps for use + wasm use
  * SSL

@@ -11,7 +11,7 @@
     License: Uses OpenSSL License
 */
 
-class lightweight_cpp_webserver {
+class custom_openssl_context {
 private:
     SSL_CTX *ssl_ctx;
 

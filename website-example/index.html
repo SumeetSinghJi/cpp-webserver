@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,15 +8,37 @@
     <link rel="stylesheet" href="website.css">
     <link rel="icon" type="image/x-icon" href="assets/graphics/icons/favicon.ico">
 </head>
+
 <body>
     <header>
         <!-- HEADER -->
-        <h1>Welcome to My Website</h1>
+        <h1>Welcome to the Lightweight CPP Webserver</h1>
     </header>
 
     <main>
         <!-- BODY -->
-        <p>This is where your main content will go.</p>
+        <h2>How to use guide</h2>
+        <p>
+            1. Clone or download a copy of the lightweight web server codebase
+            from here: https://github.com/SumeetSinghJi/cpp-webserver
+
+            2. Initialise an object with an IP address for web server and port number
+            e.g; lightweight_cpp_webserver server("127.0.0.1", 8080);
+            The IP will then be available to browse to from a web browser
+
+            3. In handle_static_file_request() and serve_error_page() replace string ".website-example/"
+            with a directory containing new website. String ".website-example/" represents a example directory that
+            hosts example website that is loaded by default. Replace this string with any directory to load webpages
+            within
+
+            4. In get_requested_page() replace strings "index.html" and "homepage.html" with desired
+            webpage for required website.
+
+            5. Re-run the executable/binary main.exe
+
+            6. From a client browser browse to specified webserver IP:Port e.g; 127.0.0.1:8080
+
+            5. Webpage from chosen directory will load on browser.</p>
     </main>
 
     <footer>
@@ -23,4 +46,5 @@
         <p>&copy; 2023 Your Website. All Rights Reserved.</p>
     </footer>
 </body>
+
 </html>
