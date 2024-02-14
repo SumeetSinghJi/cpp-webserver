@@ -19,10 +19,13 @@
 #include <filesystem>     // for getenv for output file to the correct environment
 #include <chrono>         // for timestamping logs
 #include <csignal>        // If CTRL+C signal given, perform SSL shutdown
+#include <thread>         // Signal/Handle sleep after cleanup for verbose output
+#include <chrono>         // Signal/Handle sleep after cleanup for verbose output
 
 #ifdef _WIN32 // Windows hardware network interface required headers
 #include <winsock2.h>
 #include <WS2tcpip.h> // for inet_ntop() to extract client IP
+#include <Windows.h> // for testing on windows window terminal executable close button, perform exit cleanup
 #else   // Linux hardware network interface required headers
 #include <sys/socket.h>
 #include <arpa/inet.h>

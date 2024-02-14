@@ -15,7 +15,7 @@
  */
 
 // Initialize the static pointer
-lightweight_cpp_webserver* lightweight_cpp_webserver::serverInstance = nullptr;
+lightweight_cpp_webserver *lightweight_cpp_webserver::serverInstance = nullptr;
 
 // Modify the constructor to assign the server instance to the static pointer
 lightweight_cpp_webserver::lightweight_cpp_webserver(const std::string &ipAddress, int portNumber)
@@ -433,6 +433,9 @@ bool lightweight_cpp_webserver::initialise_ssl_context(const std::string &certFi
         return false;
     }
 
+    // Set options to disable outdated insecure SSLv2 and SSLv3
+    SSL_CTX_set_options(ssl_ctx, SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3);
+
     // Load certificate and private key
     if (SSL_CTX_use_certificate_file(ssl_ctx, certFile.c_str(), SSL_FILETYPE_PEM) <= 0)
     {
@@ -454,10 +457,6 @@ bool lightweight_cpp_webserver::initialise_ssl_context(const std::string &certFi
         ERR_print_errors_fp(stderr);
         return false;
     }
-
-    // Optionally, configure additional SSL options
-    // For example:
-    // SSL_CTX_set_options(ssl_ctx, SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3);
 
     std::cout << "SSL webserver .cer and .key pair loaded successfully" << std::endl;
 
@@ -528,9 +527,19 @@ bool lightweight_cpp_webserver::ssl_shutdown()
 
 void lightweight_cpp_webserver::signal_handler(int signum)
 {
+    // When Commands CTRL + C are entered the program will break, however as signal is registered
+    // These additional commands will run, which are to clean up SSL.
     std::cout << "Termination signal received. Exiting program safely." << std::endl;
-    if (serverInstance != nullptr)
+    if (serverInstance != nullptr && serverInstance->ssl_ctx != nullptr && serverInstance->ssl != nullptr)
     {
+        std::this_thread::sleep_for(std::chrono::seconds(1));
         serverInstance->ssl_shutdown();
     }
+    // Close the server socket
+    closesocket(serverInstance->serverSocket);
+
+#ifdef _WIN32
+    // Cleanup Winsock if on Windows
+    WSACleanup();
+#endif
 }
