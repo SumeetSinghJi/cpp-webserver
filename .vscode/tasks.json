@@ -13,9 +13,9 @@
                 "${fileDirname}/*.cpp", // uncomment for combining all .cpp files
                 "-o",
                 "${fileDirname}\\${fileBasenameNoExtension}.exe",
-                "-lws2_32", // <winsock.h>
-                "-lssl",    // OpenSSL
-                "-lcrypto"  // OpenSSL
+                "-lws2_32",     // <winsock.h>
+                "-lssl",        // OpenSSL
+                "-lcrypto",     // OpenSSL
             ],
             "options": {
                 "cwd": "${fileDirname}"

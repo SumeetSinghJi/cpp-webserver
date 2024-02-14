@@ -5,9 +5,10 @@
     Purpose: Definition file
 */
 
-#include "headers/lightweight_cpp_webserver.hpp" // function and class declarations file
+#include "headers/lightweight_cpp_webserver.hpp" // Declarations file
 
 /* TO DO
+ * Setup testing
  * Make the directory for website folder a private member and constructor parameter
  * SSL setup
  * Content Security Policy (CSP)

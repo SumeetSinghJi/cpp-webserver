@@ -1,9 +1,10 @@
 /*
     Author: Sumeet Singh
     Dated: 22/01/2024
-    File: Declaration file
-    Description: read the attached README.md file
     Minimum C++ Standard: C++11
+    Purpose: Declaration file
+    License: MIT License
+    Description: read the attached README.md file
 */
 
 #pragma once
@@ -18,10 +19,10 @@
 #include <filesystem>     // for getenv for output file to the correct environment
 #include <chrono>         // for timestamping logs
 
-#ifdef _WIN32
+#ifdef _WIN32 // Windows hardware network interface required headers
 #include <winsock2.h>
-#include <WS2tcpip.h>
-#else
+#include <WS2tcpip.h> // for inet_ntop() to extract client IP
+#else   // Linux hardware network interface required headers
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <unistd.h>

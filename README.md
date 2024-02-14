@@ -1,4 +1,4 @@
-## Lightweight C++ Webserver
+# Lightweight C++ Webserver
 
 ## Author
 Sumeet Singh
@@ -15,18 +15,17 @@ This project is licensed under the MIT License.
 Note: This project includes components from OpenSSL, which is licensed under the Apache License. See the `./src/openssl/license.txt` file for details on the Apache License.
 
 
-## Requirements
-Minimum C++ Standard: C++11
-* PENDING - Uses "Win64 OpenSSL v3.2.0" found here: https://slproweb.com/products/Win32OpenSSL.html
-* PENDING - Uses "boost.asio" found here: https://github.com/boostorg/asio
-* OPTIONAL - CMake - to build the executable/binary if desired
+# Requirements
+OpenSSL installed on device
+For Windows;
+* "Win64 OpenSSL v3.2.0" found here: https://slproweb.com/products/Win32OpenSSL.html
 
 
-## Installation
-Executable/Binary can be created with CMake. 
+# Installation
+1. Follow the instructions in the "Example" section.
+Optional: Executable/Binary can be created with CMake. 
 
 e.g. Windows OS, using MinGW64;
-
 Run both commands in terminal after each other in the ./build folder
 
 ```cpp
@@ -34,17 +33,21 @@ cmake .. -G "MinGW Makefiles"
 mingw32-make VERBOSE=1
 ```
 
-## Files
-* ./src - Contains custom and/or third party libraries
-* ./website-example - Default example website and webpage files serving static page
-* ./wasm-example - Default example C++ WebAssembly files (.html, .js, .wasm) for testing
-* ./headers - headers files for class and function declarations
-* lightweight_cpp_webserver.cpp - Implementation file
-* main.cpp - main file with example on how to initialise class
-* main.exe - Windows OS ready executable
+
+# Files
+* ./src - Third party libraries
+* ./website-example - Default example website
+* ./wasm-example - Default example C++ WebAssembly website
+* ./headers - headers
+* ./headers/lightweight_cpp_webserver.hpp - Declaration file
+* lightweight_cpp_webserver.cpp - Definition file
+* custom_openssl_context.hpp - Declaration/Definition file
+* main.cpp - Implementation file
+* main.exe - Executable
+* testing - Google Test environment
 
 
-## Example
+# Example
 1. Clone or download a copy of the lightweight web server codebase 
 from here: https://github.com/SumeetSinghJi/cpp-webserver
 
@@ -62,4 +65,4 @@ webpage for required website.
 
 6. From a client browser browse to specified webserver IP:Port e.g; 127.0.0.1:8080
 
-5. Webpage from chosen directory will load on browser.
+7. Webpage from chosen directory will load on browser.

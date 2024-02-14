@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.0)
 project(cpp-webserver)
 
 set(CMAKE_LIBRARIES_DIR
-    "-lws2_32"
+    "-lws2_32" #  for #include <winsock2.h>
 )
 
 set(SOURCES 

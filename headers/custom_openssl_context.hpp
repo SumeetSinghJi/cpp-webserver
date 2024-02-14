@@ -1,16 +1,20 @@
+/*
+    Author: Sumeet Singh
+    Dated: 12/02/2024
+    Minimum C++ Standard: C++11
+    Purpose: Declaration/Definition file (combined to segregate third party library code)
+    License: MIT License
+    Description: read the attached README.md file
+*/
+
+#pragma once
+
 #include <iostream>
 #include <string>
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 
-/*
-    Author: Sumeet Singh
-    Dated: 12/02/2024
-    File: Declaration file
-    Minimum C++ Standard: C++11
-*/
-
-class custom_openssl_context {
+class custom_openssl {
 private:
     SSL_CTX *ssl_ctx;
 
@@ -23,8 +27,7 @@ public:
         // Initialize OpenSSL
         SSL_library_init();
         SSL_load_error_strings();
-        ERR_load_BIO_strings();
-        OpenSSL_add_all_algorithms();
+        OPENSSL_init_ssl(0, NULL);
 
         // Create an SSL context
         ssl_ctx = SSL_CTX_new(SSLv23_server_method());
@@ -53,7 +56,7 @@ public:
         // For example:
         // SSL_CTX_set_options(ssl_ctx, SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3);
 
-        std::cout << "SSL webserver .cer and .key pair loaded successfuly" << std::cout;
+        std::cout << "SSL webserver .cer and .key pair loaded successfully" << std::endl;
 
         return true;
     }
