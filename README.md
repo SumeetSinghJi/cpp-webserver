@@ -41,7 +41,6 @@ mingw32-make VERBOSE=1
 * ./headers - headers
 * ./headers/lightweight_cpp_webserver.hpp - Declaration file
 * lightweight_cpp_webserver.cpp - Definition file
-* custom_openssl_context.hpp - Declaration/Definition file
 * main.cpp - Implementation file
 * main.exe - Executable
 * testing - Google Test environment

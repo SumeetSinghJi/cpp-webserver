@@ -10,15 +10,20 @@
 /* TO DO
  * Setup testing
  * Make the directory for website folder a private member and constructor parameter
- * SSL setup
  * Content Security Policy (CSP)
  * use #include <boost/asio.hpp> for Asynchronous
  */
 
-// Constructor definition
-lightweight_cpp_webserver::lightweight_cpp_webserver(const std::string &ipAddress, int portNumber)
-    : BUFFER_SIZE(30720), webserverIPAddress(ipAddress), webserverPortNumber(portNumber){}
+// Initialize the static pointer
+lightweight_cpp_webserver* lightweight_cpp_webserver::serverInstance = nullptr;
 
+// Modify the constructor to assign the server instance to the static pointer
+lightweight_cpp_webserver::lightweight_cpp_webserver(const std::string &ipAddress, int portNumber)
+    : BUFFER_SIZE(30720), webserverIPAddress(ipAddress), webserverPortNumber(portNumber)
+{
+    // Assign the server instance to the static pointer
+    serverInstance = this;
+}
 void lightweight_cpp_webserver::setIPAddress(const std::string &ipAddress)
 {
     // Set the webserver IP address when initialised e.g; lightweight_cpp_webserver server("127.0.0.1", 8080);
@@ -410,5 +415,122 @@ void lightweight_cpp_webserver::serve_error_page(const std::string &statusCode, 
         send_response(newServerSocket, errorResponse);
         std::cout << "Finished sending response " + errorPage + " to Client browser." << std::endl;
         std::cout << "Closing client request socket." << std::endl;
+    }
+}
+
+bool lightweight_cpp_webserver::initialise_ssl_context(const std::string &certFile, const std::string &keyFile)
+{
+    // Initialize OpenSSL
+    SSL_library_init();
+    SSL_load_error_strings();
+    OPENSSL_init_ssl(0, NULL);
+
+    // Create an SSL context
+    ssl_ctx = SSL_CTX_new(SSLv23_server_method());
+    if (!ssl_ctx)
+    {
+        std::cerr << "Error: Failed to create SSL context." << std::endl;
+        return false;
+    }
+
+    // Load certificate and private key
+    if (SSL_CTX_use_certificate_file(ssl_ctx, certFile.c_str(), SSL_FILETYPE_PEM) <= 0)
+    {
+        std::cerr << "Error: Failed to load certificate file: " << certFile << std::endl;
+        ERR_print_errors_fp(stderr);
+        return false;
+    }
+    if (SSL_CTX_use_PrivateKey_file(ssl_ctx, keyFile.c_str(), SSL_FILETYPE_PEM) <= 0)
+    {
+        std::cerr << "Error: Failed to load private key file: " << keyFile << std::endl;
+        ERR_print_errors_fp(stderr);
+        return false;
+    }
+
+    // Verify private key
+    if (!SSL_CTX_check_private_key(ssl_ctx))
+    {
+        std::cerr << "Error: Private key does not match the certificate." << std::endl;
+        ERR_print_errors_fp(stderr);
+        return false;
+    }
+
+    // Optionally, configure additional SSL options
+    // For example:
+    // SSL_CTX_set_options(ssl_ctx, SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3);
+
+    std::cout << "SSL webserver .cer and .key pair loaded successfully" << std::endl;
+
+    return true;
+}
+
+bool lightweight_cpp_webserver::ssl_handshake()
+{
+    // Perform SSL handshake
+    ssl = SSL_new(ssl_ctx);
+    if (!ssl)
+    {
+        std::cerr << "Error: SSL handshake failed." << std::endl;
+        return false;
+    }
+
+    SSL_set_fd(ssl, newServerSocket);
+    if (SSL_accept(ssl) <= 0)
+    {
+        std::cerr << "Error: SSL handshake failed." << std::endl;
+        return false;
+    }
+
+    std::cout << "SSL handshake successful." << std::endl;
+    return true;
+}
+
+bool lightweight_cpp_webserver::ssl_read_request()
+{
+    // Read request over SSL connection
+    char buff[30720] = {0};
+    bytesReceived = SSL_read(ssl, buff, BUFFER_SIZE);
+    if (bytesReceived <= 0)
+    {
+        std::cout << "Error: Could not read client request/possible client disconnect" << std::endl;
+        return false;
+    }
+    std::cout << "Read client request successfully over SSL." << std::endl;
+
+    // Process the request
+    // ...
+
+    return true;
+}
+
+bool lightweight_cpp_webserver::ssl_write_response(const std::string &response)
+{
+    // Write response over SSL connection
+    int bytesSent = SSL_write(ssl, response.c_str(), response.size());
+    if (bytesSent <= 0)
+    {
+        std::cerr << "Error: Couldn't send response over SSL." << std::endl;
+        return false;
+    }
+
+    std::cout << "Sent response over SSL successfully." << std::endl;
+    return true;
+}
+
+bool lightweight_cpp_webserver::ssl_shutdown()
+{
+    // Shutdown SSL connection
+    SSL_shutdown(ssl);
+    SSL_free(ssl);
+    std::cout << "SSL connection shutdown successfully." << std::endl;
+    return true;
+}
+
+void lightweight_cpp_webserver::signal_handler(int signum)
+{
+    std::cout << "Termination signal received. Exiting program safely." << std::endl;
+    if (serverInstance != nullptr)
+    {
+        serverInstance->ssl_shutdown();
     }
 }

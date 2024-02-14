@@ -18,6 +18,7 @@
 #include <fstream>        // for output file/serving .html files to client browser
 #include <filesystem>     // for getenv for output file to the correct environment
 #include <chrono>         // for timestamping logs
+#include <csignal>        // If CTRL+C signal given, perform SSL shutdown
 
 #ifdef _WIN32 // Windows hardware network interface required headers
 #include <winsock2.h>
@@ -28,7 +29,6 @@
 #include <unistd.h>
 #endif
 
-// Contents of the header file go here
 class lightweight_cpp_webserver
 {
 private:
@@ -41,16 +41,22 @@ private:
     int newServerSocket;
 #endif
 
-    // Global private variables
     struct sockaddr_in server;
     int server_len;
     int BUFFER_SIZE;
     std::string webserverIPAddress;
     int webserverPortNumber;
-    std::string clientIPAddress; // Extracted in run_web_server()
+    std::string clientIPAddress;
     int bytesReceived;
     std::string logPath;
     std::string requestLine;
+
+    // SSL related members
+    SSL_CTX *ssl_ctx;
+    SSL *ssl;
+
+    // Signal shutdown
+    static lightweight_cpp_webserver* serverInstance;
 
 public:
     lightweight_cpp_webserver(const std::string &ipAddress, int portNumber);
@@ -82,4 +88,16 @@ public:
     void handle_static_file_request(const std::string &requestedPage);
 
     void serve_error_page(const std::string &statusCode, const std::string &errorPage);
+
+    bool initialise_ssl_context(const std::string &certFile, const std::string &keyFile);
+
+    bool ssl_handshake();
+
+    bool ssl_read_request();
+
+    bool ssl_write_response(const std::string &response);
+
+    bool ssl_shutdown();
+
+    static void signal_handler(int signum);
 };
