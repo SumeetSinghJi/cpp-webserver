@@ -1,11 +1,11 @@
 # Lightweight C++ Webserver
 
-Created: 22/01/2024
-Version: 0.1
-Description: Lightweight C++ console web server capable of hosting and serving web pages from any specified folder.
-Author: Sumeet Singh @ www.sumeet-singh.com
-Publisher: Sumeet Singh @ www.sumeet-singh.com 
-License: This project is licensed under the MIT License.
+* Created: 22/01/2024
+* Version: 0.1
+* Description: Lightweight C++ console web server capable of hosting and serving web pages from any specified folder.
+* Author: Sumeet Singh @ www.sumeet-singh.com
+* Publisher: Sumeet Singh @ www.sumeet-singh.com 
+* License: This project is licensed under the MIT License.
 Note: This project includes components from OpenSSL, which is licensed under the Apache License.
 See the `./src/openssl/license.txt` file for details on the Apache License.
 
