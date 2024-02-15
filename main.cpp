@@ -4,8 +4,7 @@
     Minimum C++ Standard: C++11
     Purpose: Implementation file for starting the web server with SSL support
     License: MIT License
-    Description: This program initializes a lightweight web server with SSL support
-                 and runs it on localhost at port 8080.
+    Description: Read README.md for more details
 */
 
 #include "headers/lightweight_cpp_webserver.hpp" // Declarations file
