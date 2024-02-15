@@ -7,37 +7,40 @@ Sumeet Singh
 22/01/2024
 
 ## Description
-Lightweight C++ web server library for serving requests with webpages.
+Lightweight C++ console web server capable of hosting and serving web pages from any specified folder.
 
 ## License
 This project is licensed under the MIT License.
 
-Note: This project includes components from OpenSSL, which is licensed under the Apache License. See the `./src/openssl/license.txt` file for details on the Apache License.
+Note: This project includes components from OpenSSL, which is licensed under the Apache License.
+See the `./src/openssl/license.txt` file for details on the Apache License.
 
 
-# Requirements - if building project
+# Requirements
 
-OpenSSL installed on device
-For Windows;
-* "Win64 OpenSSL v3.2.0" found here: https://slproweb.com/products/Win32OpenSSL.html
+n/a
 
 
 # Installation
 
-1. Clone or download a copy of the lightweight web server codebase from: https://github.com/SumeetSinghJi/cpp-webserver
-(Optional) Build with CMAKE
+1. Download a copy of the lightweight web server codebase from here: https://github.com/SumeetSinghJi/cpp-webserver
 
 
 # Files
 
-* ./src - Third party libraries
-* ./website-example - Default example website
-* ./wasm-example - Default example C++ WebAssembly website
 * ./headers - headers
 * ./headers/lightweight_cpp_webserver.hpp - Declaration file
+* ./keys - contains SSL keys and Certs
+* ./src - Third party libraries
+* ./vscode - VScode development config files
+* ./wasm-example - Default example C++ WebAssembly website
+* ./website-example - Default example website
 * lightweight_cpp_webserver.cpp - Definition file
+* Change_log.txt - Documentation for all future code modifications e.g, features/updates/security changes
+* CMAKElists.txt - development config file for building with CMAKE
 * main.cpp - Implementation file
 * main.exe - Executable
+* README.md - Instruction guide
 * testing - Google Test environment
 
 

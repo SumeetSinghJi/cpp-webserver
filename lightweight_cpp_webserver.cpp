@@ -8,6 +8,8 @@
 #include "headers/lightweight_cpp_webserver.hpp" // Declarations file
 
 /* TO DO
+ * Parameter inputs for error page, index page, homepage
+ * Download into ./src OpenSSL, and include and link to project, may be necesary to specify bin path for CMAKE
  * SSL not integrated
  * Setup testing
  * Content Security Policy (CSP)
