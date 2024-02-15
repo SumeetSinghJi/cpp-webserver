@@ -8,26 +8,22 @@
 #include "headers/lightweight_cpp_webserver.hpp" // Declarations file
 
 /* TO DO
+ * SSL not integrated
  * Setup testing
- * Make the directory for website folder a private member and constructor parameter
  * Content Security Policy (CSP)
  * use #include <boost/asio.hpp> for Asynchronous
+ * WASM setup test
+ * Update readme as version 1.0, Create a release
  */
 
-// Initialize the static pointer
 lightweight_cpp_webserver *lightweight_cpp_webserver::serverInstance = nullptr;
 
-// Modify the constructor to assign the server instance to the static pointer
-lightweight_cpp_webserver::lightweight_cpp_webserver(const std::string &ipAddress, int portNumber)
-    : BUFFER_SIZE(30720), webserverIPAddress(ipAddress), webserverPortNumber(portNumber)
-{
-    // Assign the server instance to the static pointer
-    serverInstance = this;
-}
-void lightweight_cpp_webserver::setIPAddress(const std::string &ipAddress)
+lightweight_cpp_webserver::lightweight_cpp_webserver() { serverInstance = this; }
+
+void lightweight_cpp_webserver::set_IP_address(const std::string &ipAddress)
 {
     // Set the webserver IP address when initialised e.g; lightweight_cpp_webserver server("127.0.0.1", 8080);
-    if (isValidIPAddress(ipAddress))
+    if (is_valid_IP_address(ipAddress))
     {
         this->webserverIPAddress = ipAddress;
     }
@@ -37,10 +33,9 @@ void lightweight_cpp_webserver::setIPAddress(const std::string &ipAddress)
     }
 }
 
-void lightweight_cpp_webserver::setPortNumber(int portNumber)
+void lightweight_cpp_webserver::set_port_number(int portNumber)
 {
-    // Set the webserver Port number when initialised e.g; lightweight_cpp_webserver server("127.0.0.1", 8080);
-    if (isValidPortAddress(portNumber))
+    if (is_valid_port_address(portNumber))
     {
         this->webserverPortNumber = portNumber;
     }
@@ -48,6 +43,58 @@ void lightweight_cpp_webserver::setPortNumber(int portNumber)
     {
         std::cout << "Error: Invalid port range. Must be < 8080 * > 8090" << std::endl;
     }
+}
+
+std::string lightweight_cpp_webserver::get_webserver_IP_address()
+{
+    return webserverIPAddress;
+};
+
+int lightweight_cpp_webserver::get_webserver_port_address()
+{
+    return webserverPortNumber;
+};
+
+bool lightweight_cpp_webserver::is_valid_IP_address(const std::string &ipAddress)
+{
+    // Security - Input validation
+    // Split the IP address into octets
+    std::vector<int> octets;
+    std::istringstream ss(ipAddress);
+    std::string octet;
+    while (std::getline(ss, octet, '.'))
+    {
+        octets.push_back(std::stoi(octet));
+    }
+
+    // Check if the IP address falls within the specified ranges
+    if (octets.size() == 4)
+    {
+        if ((octets[0] == 10) ||
+            (octets[0] == 127) ||
+            (octets[0] == 172 && octets[1] >= 16 && octets[1] <= 31) ||
+            (octets[0] == 192 && octets[1] == 168))
+        {
+            return true;
+        }
+    }
+
+    return false;
+};
+
+bool lightweight_cpp_webserver::is_valid_port_address(int &portNumber)
+{
+    // Security - Input validation
+    if (portNumber >= 8080 && portNumber <= 8090)
+    {
+        return true;
+    }
+    return false;
+};
+
+void lightweight_cpp_webserver::set_website_directory(std::string websiteFolderPath)
+{
+    this->websiteFolderPath = websiteFolderPath;
 }
 
 bool lightweight_cpp_webserver::initialise_web_server()
@@ -228,42 +275,6 @@ bool lightweight_cpp_webserver::accept_client_request()
     return true;
 }
 
-bool lightweight_cpp_webserver::isValidIPAddress(const std::string &ipAddress)
-{
-    // Security - Input validation
-    // Split the IP address into octets
-    std::vector<int> octets;
-    std::istringstream ss(ipAddress);
-    std::string octet;
-    while (std::getline(ss, octet, '.'))
-    {
-        octets.push_back(std::stoi(octet));
-    }
-
-    // Check if the IP address falls within the specified ranges
-    if (octets.size() == 4)
-    {
-        if ((octets[0] == 10) ||
-            (octets[0] == 172 && octets[1] >= 16 && octets[1] <= 31) ||
-            (octets[0] == 192 && octets[1] == 168))
-        {
-            return true;
-        }
-    }
-
-    return false;
-};
-
-bool lightweight_cpp_webserver::isValidPortAddress(int &portNumber)
-{
-    // Security - Input validation
-    if (portNumber >= 8080 && portNumber <= 8090)
-    {
-        return true;
-    }
-    return false;
-};
-
 void lightweight_cpp_webserver::output_logs(const std::string &header)
 {
     std::string home_directory = "";
@@ -383,6 +394,7 @@ void lightweight_cpp_webserver::handle_static_file_request(const std::string &re
 {
     std::cout << "Starting serving static webpage .html response to Client browser" << std::endl;
     std::string filePath = "website-example/" + requestedPage;
+    std::cout << "Full local filepath of requested page is: " << filePath << std::endl;
     std::string fileContent = read_static_html_file(filePath);
 
     if (!fileContent.empty())
@@ -542,4 +554,29 @@ void lightweight_cpp_webserver::signal_handler(int signum)
     // Cleanup Winsock if on Windows
     WSACleanup();
 #endif
+}
+
+void lightweight_cpp_webserver::default_string_initialisation_inputs(const std::string defaultValue)
+{
+    std::string userInput;
+    std::getline(std::cin, userInput);
+    if (!userInput.empty())
+    {
+        set_IP_address(userInput);
+    }
+    std::cin.clear();
+}
+
+void lightweight_cpp_webserver::default_int_initialisation_inputs(const int defaultValue)
+{
+    std::string userInput;
+    std::getline(std::cin, userInput);
+    if (!userInput.empty())
+    {
+        std::istringstream iss(userInput);
+        int value;
+        iss >> value;
+        set_port_number(value);
+    }
+    std::cin.clear();
 }

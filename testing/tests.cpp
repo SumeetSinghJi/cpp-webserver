@@ -12,6 +12,7 @@ class WebServerTest: public ::testing::Test {
         // TearDown is a Google Test function
         void TearDown() override {
             delete server;
+            lightweight_cpp_webserver::server.ssl_shutdown();
         }
 
         lightweight_cpp_webserver* server;
