@@ -15,7 +15,6 @@
  * Content Security Policy (CSP)
  * use #include <boost/asio.hpp> for Asynchronous
  * WASM setup test
- * Update readme as version 1.0, Create a release
  */
 
 lightweight_cpp_webserver *lightweight_cpp_webserver::serverInstance = nullptr;
@@ -59,7 +58,6 @@ int lightweight_cpp_webserver::get_webserver_port_address()
 
 bool lightweight_cpp_webserver::is_valid_IP_address(const std::string &ipAddress)
 {
-    // Security - Input validation
     // Split the IP address into octets
     std::vector<int> octets;
     std::istringstream ss(ipAddress);
@@ -69,20 +67,34 @@ bool lightweight_cpp_webserver::is_valid_IP_address(const std::string &ipAddress
         octets.push_back(std::stoi(octet));
     }
 
-    // Check if the IP address falls within the specified ranges
-    if (octets.size() == 4)
+    // Check if the IP address has four octets
+    if (octets.size() != 4)
     {
-        if ((octets[0] == 10) ||
-            (octets[0] == 127) ||
-            (octets[0] == 172 && octets[1] >= 16 && octets[1] <= 31) ||
-            (octets[0] == 192 && octets[1] == 168))
-        {
-            return true;
-        }
+        return false;
     }
 
+    // Check if each octet falls within the range [0, 255]
+    for (int octetValue : octets)
+    {
+        if (octetValue < 0 || octetValue > 255)
+        {
+            return false;
+        }
+        return true;
+    }
+
+    /*
+    // Check if the IP address falls within the specified ranges
+    if ((octets[0] == 10) ||
+        (octets[0] == 172 && octets[1] >= 16 && octets[1] <= 31) ||
+        (octets[0] == 192 && octets[1] == 168))
+    {
+        return true;
+    }
+    */
+
     return false;
-};
+}
 
 bool lightweight_cpp_webserver::is_valid_port_address(int &portNumber)
 {

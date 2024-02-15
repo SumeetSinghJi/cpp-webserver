@@ -1,13 +1,19 @@
 # Lightweight C++ Webserver
 
-## Author
-Sumeet Singh
-
-## Dated
+## Created
 22/01/2024
+
+## Version
+0.1
 
 ## Description
 Lightweight C++ console web server capable of hosting and serving web pages from any specified folder.
+
+## Author
+Sumeet Singh @ www.sumeet-singh.com
+
+## Publisher
+Sumeet Singh @ www.sumeet-singh.com 
 
 ## License
 This project is licensed under the MIT License.
@@ -16,12 +22,12 @@ Note: This project includes components from OpenSSL, which is licensed under the
 See the `./src/openssl/license.txt` file for details on the Apache License.
 
 
-# Requirements
+# REQUIREMENTS
 
 n/a
 
 
-# Installation
+# SETUP
 
 1. Download a copy of the lightweight web server codebase from here: https://github.com/SumeetSinghJi/cpp-webserver
 
@@ -44,7 +50,7 @@ n/a
 * testing - Google Test environment
 
 
-# Example
+# INSTRUCTIONS
 
 1. Build or run .exe
 2. Enter parameters requested or press ENTER to skip and use defaults (
