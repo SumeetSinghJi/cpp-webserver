@@ -50,7 +50,7 @@ private:
     std::string webserverIPAddress = "127.0.0.1";
     int webserverPortNumber = 8080;
     std::string clientIPAddress = "";
-    std::string websiteFolderPath = "website-example/";
+    std::string WebsiteFolderName = "website-example/";
     std::string websiteIndexFile = "index.html";
     int bytesReceived = 0;
     std::string logPath = "";
@@ -67,14 +67,17 @@ public:
     lightweight_cpp_webserver();
 
     void set_IP_address(const std::string &ipAddress);
-
     void set_port_number(int portNumber);
+    void set_website_directory(std::string WebsiteFolder);
+    void set_website_index(std::string indexFileName);
 
     std::string get_webserver_IP_address();
-
     int get_webserver_port_address();
+    std::string get_website_directory();
+    std::string get_website_index();
 
-    void set_website_directory(std::string websiteFolderPath);
+    bool is_valid_IP_address(const std::string &ipAddress);
+    bool is_valid_port_address(int &portNumber);
 
     bool initialise_web_server();
 
@@ -83,10 +86,6 @@ public:
     bool read_and_validate_headers(std::vector<std::string> &headers);
 
     bool accept_client_request();
-
-    bool is_valid_IP_address(const std::string &ipAddress);
-
-    bool is_valid_port_address(int &portNumber);
 
     void output_logs(const std::string &header);
 
@@ -101,18 +100,13 @@ public:
     void serve_error_page(const std::string &statusCode, const std::string &errorPage);
 
     bool initialise_ssl_context(const std::string &certFile, const std::string &keyFile);
-
     bool ssl_handshake();
-
     bool ssl_read_request();
-
     bool ssl_write_response(const std::string &response);
-
     bool ssl_shutdown();
 
     static void signal_handler(int signum);
 
     void default_string_initialisation_inputs(const std::string defaultValue);
-
     void default_int_initialisation_inputs(const int defaultValue);
 };

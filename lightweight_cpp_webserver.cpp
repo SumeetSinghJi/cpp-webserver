@@ -30,10 +30,10 @@ void lightweight_cpp_webserver::set_IP_address(const std::string &ipAddress)
     }
     else
     {
-        std::cout << "Error: Invalid IP address range. Must be private address in class A (10.), B (172.16.31.) or C (192.168.)" << std::endl;
+        std::cout << "Error: Invalid IP address range. Must be 4 octets in ranges 0 - 255 e.g, 10.10.10.10" << std::endl;
+        // Must be private address in class A (10.), B (172.16.31.) or C (192.168.)"
     }
 }
-
 void lightweight_cpp_webserver::set_port_number(int portNumber)
 {
     if (is_valid_port_address(portNumber))
@@ -42,18 +42,33 @@ void lightweight_cpp_webserver::set_port_number(int portNumber)
     }
     else
     {
-        std::cout << "Error: Invalid port range. Must be < 8080 * > 8090" << std::endl;
+        std::cout << "Error: Invalid port range. Must be > 1024 or < 65535." << std::endl;
     }
+}
+void lightweight_cpp_webserver::set_website_directory(std::string WebsiteFolder)
+{
+    this->WebsiteFolderName = WebsiteFolder;
+}
+void lightweight_cpp_webserver::set_website_index(std::string indexFileName)
+{
+    this->websiteIndexFile = indexFileName;
 }
 
 std::string lightweight_cpp_webserver::get_webserver_IP_address()
 {
     return webserverIPAddress;
 };
-
 int lightweight_cpp_webserver::get_webserver_port_address()
 {
     return webserverPortNumber;
+}
+std::string lightweight_cpp_webserver::get_website_directory()
+{
+    return WebsiteFolderName;
+};
+std::string lightweight_cpp_webserver::get_website_index()
+{
+    return websiteIndexFile;
 };
 
 bool lightweight_cpp_webserver::is_valid_IP_address(const std::string &ipAddress)
@@ -95,21 +110,15 @@ bool lightweight_cpp_webserver::is_valid_IP_address(const std::string &ipAddress
 
     return false;
 }
-
 bool lightweight_cpp_webserver::is_valid_port_address(int &portNumber)
 {
     // Security - Input validation
-    if (portNumber >= 8080 && portNumber <= 8090)
+    if (portNumber >= 1024 && portNumber <= 65535)
     {
         return true;
     }
     return false;
 };
-
-void lightweight_cpp_webserver::set_website_directory(std::string websiteFolderPath)
-{
-    this->websiteFolderPath = websiteFolderPath;
-}
 
 bool lightweight_cpp_webserver::initialise_web_server()
 {
@@ -488,7 +497,6 @@ bool lightweight_cpp_webserver::initialise_ssl_context(const std::string &certFi
 
     return true;
 }
-
 bool lightweight_cpp_webserver::ssl_handshake()
 {
     // Perform SSL handshake
@@ -509,7 +517,6 @@ bool lightweight_cpp_webserver::ssl_handshake()
     std::cout << "SSL handshake successful." << std::endl;
     return true;
 }
-
 bool lightweight_cpp_webserver::ssl_read_request()
 {
     // Read request over SSL connection
@@ -527,7 +534,6 @@ bool lightweight_cpp_webserver::ssl_read_request()
 
     return true;
 }
-
 bool lightweight_cpp_webserver::ssl_write_response(const std::string &response)
 {
     // Write response over SSL connection
@@ -541,7 +547,6 @@ bool lightweight_cpp_webserver::ssl_write_response(const std::string &response)
     std::cout << "Sent response over SSL successfully." << std::endl;
     return true;
 }
-
 bool lightweight_cpp_webserver::ssl_shutdown()
 {
     // Shutdown SSL connection
@@ -580,7 +585,6 @@ void lightweight_cpp_webserver::default_string_initialisation_inputs(const std::
     }
     std::cin.clear();
 }
-
 void lightweight_cpp_webserver::default_int_initialisation_inputs(const int defaultValue)
 {
     std::string userInput;
