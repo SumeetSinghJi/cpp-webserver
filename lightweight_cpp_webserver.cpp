@@ -453,7 +453,7 @@ void lightweight_cpp_webserver::serve_error_page(const std::string &statusCode, 
     }
 }
 
-bool lightweight_cpp_webserver::initialise_ssl_context(const std::string &certFile, const std::string &keyFile)
+bool lightweight_cpp_webserver::ssl_initialise_context(const std::string &certFile, const std::string &keyFile)
 {
     // Initialize OpenSSL
     SSL_library_init();
@@ -575,26 +575,25 @@ void lightweight_cpp_webserver::signal_handler(int signum)
 #endif
 }
 
-void lightweight_cpp_webserver::default_string_initialisation_inputs(const std::string defaultValue)
+void lightweight_cpp_webserver::default_string_initialisation_inputs(const std::string& defaultValue)
 {
     std::string userInput;
     std::getline(std::cin, userInput);
     if (!userInput.empty())
     {
-        set_IP_address(userInput);
+        if (defaultValue == "webserverIPAddress") {
+            set_IP_address(userInput);
+        }
+        else if (defaultValue == "WebsiteFolderName") {
+            set_website_directory(userInput);
+        }
+        else if (defaultValue == "websiteIndexFile") {
+            set_website_index(userInput);
+        }
+        else if (defaultValue == "webserverPortNumber") {
+            set_port_number(std::stoi(userInput));
+        }
     }
     std::cin.clear();
 }
-void lightweight_cpp_webserver::default_int_initialisation_inputs(const int defaultValue)
-{
-    std::string userInput;
-    std::getline(std::cin, userInput);
-    if (!userInput.empty())
-    {
-        std::istringstream iss(userInput);
-        int value;
-        iss >> value;
-        set_port_number(value);
-    }
-    std::cin.clear();
-}
+

@@ -99,7 +99,7 @@ public:
 
     void serve_error_page(const std::string &statusCode, const std::string &errorPage);
 
-    bool initialise_ssl_context(const std::string &certFile, const std::string &keyFile);
+    bool ssl_initialise_context(const std::string &certFile, const std::string &keyFile);
     bool ssl_handshake();
     bool ssl_read_request();
     bool ssl_write_response(const std::string &response);
@@ -107,6 +107,5 @@ public:
 
     static void signal_handler(int signum);
 
-    void default_string_initialisation_inputs(const std::string defaultValue);
-    void default_int_initialisation_inputs(const int defaultValue);
+    void default_string_initialisation_inputs(const std::string& defaultValue);
 };

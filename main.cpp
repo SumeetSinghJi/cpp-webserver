@@ -16,15 +16,23 @@ int main()
     lightweight_cpp_webserver server;
 
     std::cout << "Enter IP address for webserver (press enter for default IP: 127.0.0.1): ";
-    server.default_string_initialisation_inputs(server.get_webserver_IP_address());
+    server.default_string_initialisation_inputs("webserverIPAddress");
     std::cout << "IP entered is: " << server.get_webserver_IP_address() << std::endl;
 
     std::cout << "Enter Port number for webserver (press enter for default Port: 8080): ";
-    server.default_int_initialisation_inputs(server.get_webserver_port_address());
+    server.default_string_initialisation_inputs("webserverPortNumber");
     std::cout << "Port number entered is: " << server.get_webserver_port_address() << std::endl;
+
+    std::cout << "Enter Website directory (press enter for default directory: website-example/): ";
+    server.default_string_initialisation_inputs("WebsiteFolderName");
+    std::cout << "Website directory entered is: " << server.get_website_directory() << std::endl;
+
+    std::cout << "Enter Website index page (press enter for default page: index.html): ";
+    server.default_string_initialisation_inputs("websiteIndexFile");
+    std::cout << "index page entered is: " << server.get_website_index() << std::endl;
     
 
-    if (!server.initialise_ssl_context("keys/server.crt", "keys/server.key"))
+    if (!server.ssl_initialise_context("keys/server.crt", "keys/server.key"))
     {
         return 1;
     }
