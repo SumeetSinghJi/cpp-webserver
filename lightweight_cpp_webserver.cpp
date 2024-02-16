@@ -8,7 +8,6 @@
 #include "headers/lightweight_cpp_webserver.hpp" // Declarations file
 
 /* TO DO
- * Parameter inputs for error page, index page, homepage
  * Download into ./src OpenSSL, and include and link to project, may be necesary to specify bin path for CMAKE
  * SSL not integrated
  * Setup testing
@@ -371,21 +370,18 @@ void lightweight_cpp_webserver::send_response(int socket, const std::string &res
 
 std::string lightweight_cpp_webserver::get_requested_page(const std::string &url)
 {
-    // server index.html on root: 172.0.0.1:8080
+    // Example: If the URL is "/" e.g. "website-example.com/" or "127.0.0.1:8080/" return "index.html"
     if (url == "/")
     {
-        return "index.html";
+        return websiteIndexFile;
     }
-    else if (url == "/homepage")
-    {
-        // Example: If the URL is "/homepage", return "homepage.html"
-        return "homepage.html";
+    else if (!url.empty()) {
+        // Example: If the URL is "downloads" e.g. "website-example.com/downloads" return "download.html"
+        return url + ".html";
     }
-    // Add more conditions based on your URL mapping
-    // ...
     else
     {
-        // If no specific page is matched, return the URL path relative to "website-example/"
+        // If no specific page is matched, return the URL path relative to chosen website directory/"
         std::cout << "Page: " + url + " , Missing. Server default error.html page." << std::endl;
         return url.substr(1); // Remove the leading "/"
     }
@@ -416,7 +412,7 @@ std::string lightweight_cpp_webserver::read_static_html_file(std::string filePat
 void lightweight_cpp_webserver::handle_static_file_request(const std::string &requestedPage)
 {
     std::cout << "Starting serving static webpage .html response to Client browser" << std::endl;
-    std::string filePath = "website-example/" + requestedPage;
+    std::string filePath = WebsiteFolderName + requestedPage;
     std::cout << "Full local filepath of requested page is: " << filePath << std::endl;
     std::string fileContent = read_static_html_file(filePath);
 
@@ -436,7 +432,7 @@ void lightweight_cpp_webserver::handle_static_file_request(const std::string &re
 void lightweight_cpp_webserver::serve_error_page(const std::string &statusCode, const std::string &errorPage)
 {
     // Serve an error page
-    std::string errorFilePath = "website-example/" + errorPage;
+    std::string errorFilePath = WebsiteFolderName + errorPage;
     std::string errorFileContent = read_static_html_file(errorFilePath);
 
     if (!errorFileContent.empty())
