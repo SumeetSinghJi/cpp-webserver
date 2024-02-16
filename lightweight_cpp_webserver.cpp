@@ -8,6 +8,7 @@
 #include "headers/lightweight_cpp_webserver.hpp" // Declarations file
 
 /* TO DO
+* favicon is being looked for why?
  * Download into ./src OpenSSL, and include and link to project, may be necesary to specify bin path for CMAKE
  * SSL not integrated
  * Setup testing
@@ -205,7 +206,6 @@ bool lightweight_cpp_webserver::run_web_server()
         // Handle static file requests
         if (method == "GET" && requestedPage != "")
         {
-            std::cout << "Starting serving static webpage .html response to Client browser" << std::endl;
             handle_static_file_request(requestedPage);
         }
         else
@@ -413,7 +413,6 @@ void lightweight_cpp_webserver::handle_static_file_request(const std::string &re
 {
     std::cout << "Starting serving static webpage .html response to Client browser" << std::endl;
     std::string filePath = WebsiteFolderName + requestedPage;
-    std::cout << "Full local filepath of requested page is: " << filePath << std::endl;
     std::string fileContent = read_static_html_file(filePath);
 
     if (!fileContent.empty())
