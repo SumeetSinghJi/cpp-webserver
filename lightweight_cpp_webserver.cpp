@@ -8,7 +8,7 @@
 #include "headers/lightweight_cpp_webserver.hpp" // Declarations file
 
 /* TO DO
-* favicon is being looked for why?
+ * .css will read but not linked .js or favicon why?
  * Download into ./src OpenSSL, and include and link to project, may be necesary to specify bin path for CMAKE
  * SSL not integrated
  * Setup testing
@@ -374,10 +374,6 @@ std::string lightweight_cpp_webserver::get_requested_page(const std::string &url
     if (url == "/")
     {
         return websiteIndexFile;
-    }
-    else if (!url.empty()) {
-        // Example: If the URL is "downloads" e.g. "website-example.com/downloads" return "download.html"
-        return url + ".html";
     }
     else
     {
