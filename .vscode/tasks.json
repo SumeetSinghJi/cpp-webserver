@@ -7,14 +7,15 @@
             "args": [
                 "-fdiagnostics-color=always",
                 "-I${fileDirname}",
-                "-IC:/Program Files/OpenSSL-Win64/include/openssl", // for OpenSSL, MingW requires the include/subfolder
-                "-IC:/Program Files/OpenSSL-Win64/include", // for Clang: OpenSSL, Clang just points to parent /include
+                // "-I./src/OpenSSL-Win64/include/openssl", // for MingW: OpenSSL points to include/subfolder
+                "-I./src/OpenSSL-Win64/include", // for Clang: OpenSSL, points to parent /include
                 "-g",
                 "${file}", // uncomment for only building main.cpp
                 // "${fileDirname}/*.cpp", // uncomment for combining all .cpp files
                 "-o",
                 "${fileDirname}\\${fileBasenameNoExtension}.exe",
-                "-lws2_32",     // <winsock.h>
+                "-L./src/OpenSSL-Win64/lib", // OpenSSL
+                "-lws2_32",     // For #include <winsock.h>
                 "-lssl",        // OpenSSL
                 "-lcrypto",     // OpenSSL
             ],

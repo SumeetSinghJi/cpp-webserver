@@ -7,7 +7,7 @@
 * Publisher: Sumeet Singh @ www.sumeet-singh.com 
 * License: This project is licensed under the MIT License.
 Note: This project includes components from OpenSSL, which is licensed under the Apache License.
-See the `./src/openssl/license.txt` file for details on the Apache License.
+See the `./src/OpenSSL-Win64/license.txt` file for details on the Apache License.
 
 
 # REQUIREMENTS

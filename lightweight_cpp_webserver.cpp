@@ -123,7 +123,6 @@ bool lightweight_cpp_webserver::is_valid_port_address(int &portNumber)
     return false;
 };
 
-
 void lightweight_cpp_webserver::ssl_info_callback(const SSL *ssl, int type, int val)
 {
     const char *desc = SSL_alert_desc_string_long(val);
@@ -209,7 +208,18 @@ bool lightweight_cpp_webserver::initialise_web_server()
 
     // bind socket to address
     server.sin_family = AF_INET;
+
+
+    #ifdef _WIN32
+    // For Windows, use InetPton() instead of inet_addr()
+    inet_pton(AF_INET, webserverIPAddress.c_str(), &server.sin_addr);
+#else
+    // For other platforms, continue using inet_addr() as before
     server.sin_addr.s_addr = inet_addr(webserverIPAddress.c_str());
+#endif
+
+
+
     server.sin_port = htons(webserverPortNumber);
     server_len = sizeof(server);
 
@@ -469,8 +479,17 @@ void lightweight_cpp_webserver::output_logs(const std::string &header)
     // Check if the file is successfully opened
     if (outputFile.is_open())
     {
+#ifdef _WIN32
+        struct tm timeinfo;
+        localtime_s(&timeinfo, &currentTime);
+        char timeBuffer[80];
+        strftime(timeBuffer, sizeof(timeBuffer), "%Y-%m-%d %H:%M:%S", &timeinfo);
+        // Write the timestamp, client IP, and header to the file
+        outputFile << "[" << timeBuffer << "] "
+#else
         // Write the timestamp, client IP, and header to the file
         outputFile << "[" << std::put_time(std::localtime(&currentTime), "%Y-%m-%d %H:%M:%S") << "] "
+#endif
                    << "Client IP: " << clientIPAddress << " | "
                    << header << std::endl;
 
@@ -482,7 +501,6 @@ void lightweight_cpp_webserver::output_logs(const std::string &header)
         std::cerr << "Error: Unable to open log file for writing." << std::endl;
     }
 }
-
 
 bool lightweight_cpp_webserver::ssl_read_request()
 {

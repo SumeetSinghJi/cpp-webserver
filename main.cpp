@@ -31,7 +31,6 @@ int main()
     server.default_string_initialisation_inputs("websiteIndexFile");
     std::cout << "index page entered is: " << server.get_website_index() << std::endl;
     
-
     if (!server.ssl_initialise_context("keys/server.crt", "keys/server.key"))
     {
         return 1;
