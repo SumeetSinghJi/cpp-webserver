@@ -2,3 +2,4 @@
 /build
 /testing/build
 /src/openssl
+/src/googletest

@@ -8,13 +8,16 @@
 #include "headers/lightweight_cpp_webserver.hpp" // Declarations file
 
 /* TO DO
- * .css will read but not linked .js or favicon why?
- * Download into ./src OpenSSL, and include and link to project, may be necesary to specify bin path for CMAKE
- * SSL not integrated
- * Setup testing
+ * Build using clang - for compiler warnings
+ * use clang static check - to see memory leaks etc.,
+ * use clang profiler - to see longest taken tasks
+ * run every round of cppcheck --enable=all main.cpp
+ * run profiler to see time taken for every shutdown process
+ * Step 1 - src/openssl clone and link so initialise works
+ * SSL write response replaced send_response() however I didn't take into consideration buffer overflow security
+ * Setup Google Test
  * Content Security Policy (CSP)
  * use #include <boost/asio.hpp> for Asynchronous
- * WASM setup test
  */
 
 lightweight_cpp_webserver *lightweight_cpp_webserver::serverInstance = nullptr;
@@ -120,6 +123,68 @@ bool lightweight_cpp_webserver::is_valid_port_address(int &portNumber)
     return false;
 };
 
+
+void lightweight_cpp_webserver::ssl_info_callback(const SSL *ssl, int type, int val)
+{
+    const char *desc = SSL_alert_desc_string_long(val);
+    const char *alert_type = SSL_alert_type_string_long(val);
+
+    if (!desc)
+        desc = "unknown";
+    if (!alert_type)
+        alert_type = "unknown";
+
+    std::cerr << "SSL info: " << alert_type << " - " << desc << std::endl;
+}
+
+bool lightweight_cpp_webserver::ssl_initialise_context(const std::string &certFile, const std::string &keyFile)
+{
+    // Initialize OpenSSL
+    SSL_library_init();
+    SSL_load_error_strings();
+    OPENSSL_init_ssl(0, NULL);
+
+    // Create an SSL context
+    ssl_ctx = SSL_CTX_new(TLS_server_method());
+    if (!ssl_ctx)
+    {
+        std::cerr << "Error: Failed to create SSL context." << std::endl;
+        return false;
+    }
+
+    // Set options to disable outdated insecure SSLv2 and SSLv3
+    SSL_CTX_set_options(ssl_ctx, SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3);
+
+    // Load certificate and private key
+    if (SSL_CTX_use_certificate_file(ssl_ctx, certFile.c_str(), SSL_FILETYPE_PEM) <= 0)
+    {
+        std::cerr << "Error: Failed to load certificate file: " << certFile << std::endl;
+        ERR_print_errors_fp(stderr);
+        return false;
+    }
+    if (SSL_CTX_use_PrivateKey_file(ssl_ctx, keyFile.c_str(), SSL_FILETYPE_PEM) <= 0)
+    {
+        std::cerr << "Error: Failed to load private key file: " << keyFile << std::endl;
+        ERR_print_errors_fp(stderr);
+        return false;
+    }
+
+    // Verify private key
+    if (!SSL_CTX_check_private_key(ssl_ctx))
+    {
+        std::cerr << "Error: Private key does not match the certificate." << std::endl;
+        ERR_print_errors_fp(stderr);
+        return false;
+    }
+
+    // Set the custom info callback
+    SSL_CTX_set_info_callback(ssl_ctx, ssl_info_callback);
+
+    std::cout << "SSL webserver .cer and .key pair loaded successfully" << std::endl;
+
+    return true;
+}
+
 bool lightweight_cpp_webserver::initialise_web_server()
 {
     std::cout << "Attempting to create a web server" << std::endl;
@@ -186,10 +251,26 @@ bool lightweight_cpp_webserver::run_web_server()
             break;
         }
 
+        // Perform SSL handshake
+        if (!ssl_handshake())
+        {
+            closesocket(newServerSocket);
+            continue;
+        }
+
         // Read and validate headers
         std::vector<std::string> headers;
         if (!read_and_validate_headers(headers))
         {
+            ssl_shutdown(); // Shutdown SSL connection
+            closesocket(newServerSocket);
+            continue;
+        }
+
+        // Read the client's request over SSL
+        if (!ssl_read_request())
+        {
+            ssl_shutdown(); // Shutdown SSL connection
             closesocket(newServerSocket);
             continue;
         }
@@ -213,18 +294,102 @@ bool lightweight_cpp_webserver::run_web_server()
             // Serve a 404 error page
             serve_error_page("404 Not Found", "error.html");
         }
+
+        // Shutdown SSL connection
+        if (!ssl_shutdown())
+        {
+            closesocket(newServerSocket);
+            continue;
+        }
+
         closesocket(newServerSocket);
-        std::cout << "Closing browser response socket succesfully." << std::endl;
+        std::cout << "Closing browser response socket successfully." << std::endl;
     }
 
+    // Close the server socket
     closesocket(serverSocket);
+
 #ifdef _WIN32
+    // Cleanup Winsock if on Windows
     WSACleanup();
 #endif
-    std::cout << "Closing client request socket succesfully." << std::endl;
+
+    std::cout << "Closing client request socket successfully." << std::endl;
     std::cout << "Web server terminated successfully." << std::endl;
     return true;
-};
+}
+
+bool lightweight_cpp_webserver::accept_client_request()
+{
+#ifdef _WIN32
+    newServerSocket = accept(serverSocket, (SOCKADDR *)&server, &server_len);
+#else
+    newServerSocket = accept(serverSocket, (struct sockaddr *)&server, &server_len);
+#endif
+    if (newServerSocket == INVALID_SOCKET)
+    {
+        std::cout << "Error: Unable to accept client request: \n"
+                  << std::endl;
+        closesocket(serverSocket);
+#ifdef _WIN32
+        WSACleanup();
+#endif
+        return false;
+    }
+    std::cout << "Accepted client request successfully." << std::endl;
+
+    // Extract client IP address
+    char clientIPAddressChar[INET_ADDRSTRLEN];
+    inet_ntop(AF_INET, &(server.sin_addr), clientIPAddressChar, INET_ADDRSTRLEN);
+    clientIPAddress = std::string(clientIPAddressChar);
+    std::cout << "Client IP address is: " << clientIPAddress << std::endl;
+
+    return true;
+}
+
+bool lightweight_cpp_webserver::ssl_handshake()
+{
+    // Perform SSL handshake
+    ssl = SSL_new(ssl_ctx);
+    if (!ssl)
+    {
+        std::cerr << "Error: Failed to create SSL object." << std::endl;
+        return false;
+    }
+
+    SSL_set_fd(ssl, newServerSocket);
+
+    // Initiate SSL handshake
+    int handshakeResult = SSL_accept(ssl);
+    if (handshakeResult <= 0)
+    {
+        int sslError = SSL_get_error(ssl, handshakeResult);
+        switch (sslError)
+        {
+            case SSL_ERROR_WANT_READ:
+                std::cerr << "Error: SSL handshake failed - Want Read." << std::endl;
+                break;
+            case SSL_ERROR_WANT_WRITE:
+                std::cerr << "Error: SSL handshake failed - Want Write." << std::endl;
+                break;
+            case SSL_ERROR_SSL:
+                std::cerr << "Error: SSL handshake failed - SSL error." << std::endl;
+                break;
+            case SSL_ERROR_SYSCALL:
+                std::cerr << "Error: SSL handshake failed - System call error: ";
+                perror("");
+                break;
+            default:
+                std::cerr << "Error: SSL handshake failed - Unknown error." << std::endl;
+                break;
+        }
+        ERR_print_errors_fp(stderr); // Print OpenSSL error stack
+        return false;
+    }
+
+    std::cout << "SSL handshake successful." << std::endl;
+    return true;
+}
 
 bool lightweight_cpp_webserver::read_and_validate_headers(std::vector<std::string> &headers)
 {
@@ -268,35 +433,6 @@ bool lightweight_cpp_webserver::read_and_validate_headers(std::vector<std::strin
     // end security - XSS header validation sanitizing
     return true;
 }
-
-bool lightweight_cpp_webserver::accept_client_request()
-{
-#ifdef _WIN32
-    newServerSocket = accept(serverSocket, (SOCKADDR *)&server, &server_len);
-#else
-    newServerSocket = accept(serverSocket, (struct sockaddr *)&server, &server_len);
-#endif
-    if (newServerSocket == INVALID_SOCKET)
-    {
-        std::cout << "Error: Unable to accept client request: \n"
-                  << std::endl;
-        closesocket(serverSocket);
-#ifdef _WIN32
-        WSACleanup();
-#endif
-        return false;
-    }
-    std::cout << "Accepted client request successfully." << std::endl;
-
-    // Extract client IP address
-    char clientIPAddressChar[INET_ADDRSTRLEN];
-    inet_ntop(AF_INET, &(server.sin_addr), clientIPAddressChar, INET_ADDRSTRLEN);
-    clientIPAddress = std::string(clientIPAddressChar);
-    std::cout << "Client IP address is: " << clientIPAddress << std::endl;
-
-    return true;
-}
-
 void lightweight_cpp_webserver::output_logs(const std::string &header)
 {
     std::string home_directory = "";
@@ -305,14 +441,24 @@ void lightweight_cpp_webserver::output_logs(const std::string &header)
     std::string filepath_separator;
 #ifdef _WIN32
     filepath_separator = '\\';
-    home_directory = getenv("USERPROFILE");
+    char* env_value = nullptr;
+    size_t len = 0;
+    errno_t err = _dupenv_s(&env_value, &len, "USERPROFILE");
+    if (err == 0 && env_value != nullptr) {
+        home_directory = env_value;
+        free(env_value); // free memory allocated by _dupenv_s
+    } else {
+        // handle error
+        std::cerr << "Error: Unable to get USERPROFILE environment variable." << std::endl;
+        return;
+    }
 #else
     filepath_separator = '/';
     home_directory = getenv("HOME");
 #endif
 
     // Construct the log file path
-    logPath = home_directory + filepath_separator + "logs.txt";
+    std::string logPath = home_directory + filepath_separator + "logs.txt";
 
     // Get the current time
     auto currentTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
@@ -335,10 +481,46 @@ void lightweight_cpp_webserver::output_logs(const std::string &header)
     {
         std::cerr << "Error: Unable to open log file for writing." << std::endl;
     }
-};
+}
 
+
+bool lightweight_cpp_webserver::ssl_read_request()
+{
+    // Read request over SSL connection
+    char buff[30720] = {0};
+    bytesReceived = SSL_read(ssl, buff, BUFFER_SIZE);
+    if (bytesReceived <= 0)
+    {
+        std::cout << "Error: Could not read client request/possible client disconnect" << std::endl;
+        return false;
+    }
+    std::cout << "Read client request successfully over SSL." << std::endl;
+
+    // Process the request
+    // ...
+
+    return true;
+}
+
+std::string lightweight_cpp_webserver::get_requested_page(const std::string &url)
+{
+    // Example: If the URL is "/" e.g. "website-example.com/" or "127.0.0.1:8080/" return "index.html"
+    if (url == "/")
+    {
+        return websiteIndexFile;
+    }
+    else
+    {
+        // If no specific page is matched, return the URL path relative to chosen website directory/"
+        std::cout << "Page: " + url + " , Missing. Server default error.html page." << std::endl;
+        return url.substr(1); // Remove the leading "/"
+    }
+}
+
+/*
 void lightweight_cpp_webserver::send_response(int socket, const std::string &response)
 {
+    // Replaced with ssl_write_response(const std::string &response)
     // Tracking if the size of the response sent to client when they view web server from web browser, matches total response size
     int bytesSent = 0;
     int totalBytesSent = 0;
@@ -346,10 +528,10 @@ void lightweight_cpp_webserver::send_response(int socket, const std::string &res
 
     while (totalBytesSent < response.size())
     {
-        /*
+
         Security - Prevent Buffer overflow attacks with Buffer size limit
         static cast std::min to ensure we don't send more than remaining bytes
-        */
+
         bytesSent = send(socket, responseBuffer + totalBytesSent, static_cast<int>(std::min<int>(BUFFER_SIZE, response.size() - totalBytesSent)), 0);
 
         if (bytesSent <= 0)
@@ -368,18 +550,31 @@ void lightweight_cpp_webserver::send_response(int socket, const std::string &res
     closesocket(socket);
 }
 
-std::string lightweight_cpp_webserver::get_requested_page(const std::string &url)
+*/
+
+void lightweight_cpp_webserver::handle_static_file_request(const std::string &requestedPage)
 {
-    // Example: If the URL is "/" e.g. "website-example.com/" or "127.0.0.1:8080/" return "index.html"
-    if (url == "/")
+    std::cout << "Starting serving static webpage .html response to Client browser" << std::endl;
+    std::string filePath = WebsiteFolderName + requestedPage;
+    std::string fileContent = read_static_html_file(filePath);
+
+    if (!fileContent.empty())
     {
-        return websiteIndexFile;
-    }
-    else
-    {
-        // If no specific page is matched, return the URL path relative to chosen website directory/"
-        std::cout << "Page: " + url + " , Missing. Server default error.html page." << std::endl;
-        return url.substr(1); // Remove the leading "/"
+        std::string response = "HTTP/1.1 200 OK\n"
+                               "Content-Type: text/html\n"
+                               "Content-Length: " +
+                               std::to_string(fileContent.size()) + "\n\n" + fileContent;
+
+        // Send the static file as the response over SSL connection
+        // send_response(newServerSocket, errorResponse);
+        if (!ssl_write_response(response))
+        {
+            ssl_shutdown(); // Shutdown SSL connection
+            closesocket(newServerSocket);
+            return;
+        }
+
+        std::cout << "Sent response static webpage .html to Client browser successfully." << std::endl;
     }
 }
 
@@ -405,25 +600,6 @@ std::string lightweight_cpp_webserver::read_static_html_file(std::string filePat
     }
 }
 
-void lightweight_cpp_webserver::handle_static_file_request(const std::string &requestedPage)
-{
-    std::cout << "Starting serving static webpage .html response to Client browser" << std::endl;
-    std::string filePath = WebsiteFolderName + requestedPage;
-    std::string fileContent = read_static_html_file(filePath);
-
-    if (!fileContent.empty())
-    {
-        std::string response = "HTTP/1.1 200 OK\n"
-                               "Content-Type: text/html\n"
-                               "Content-Length: " +
-                               std::to_string(fileContent.size()) + "\n\n" + fileContent;
-
-        // Send the static file as the response
-        send_response(newServerSocket, response);
-        std::cout << "Sent response static webpage .html to Client browser successfully." << std::endl;
-    }
-}
-
 void lightweight_cpp_webserver::serve_error_page(const std::string &statusCode, const std::string &errorPage)
 {
     // Serve an error page
@@ -438,93 +614,18 @@ void lightweight_cpp_webserver::serve_error_page(const std::string &statusCode, 
                                     std::to_string(errorFileContent.size()) + "\n\n" + errorFileContent;
 
         // Send the error page as the response
-        send_response(newServerSocket, errorResponse);
+        // send_response(newServerSocket, errorResponse);
+        if (!ssl_write_response(errorResponse))
+        {
+            ssl_shutdown(); // Shutdown SSL connection
+            closesocket(newServerSocket);
+            return;
+        }
         std::cout << "Finished sending response " + errorPage + " to Client browser." << std::endl;
         std::cout << "Closing client request socket." << std::endl;
     }
 }
 
-bool lightweight_cpp_webserver::ssl_initialise_context(const std::string &certFile, const std::string &keyFile)
-{
-    // Initialize OpenSSL
-    SSL_library_init();
-    SSL_load_error_strings();
-    OPENSSL_init_ssl(0, NULL);
-
-    // Create an SSL context
-    ssl_ctx = SSL_CTX_new(SSLv23_server_method());
-    if (!ssl_ctx)
-    {
-        std::cerr << "Error: Failed to create SSL context." << std::endl;
-        return false;
-    }
-
-    // Set options to disable outdated insecure SSLv2 and SSLv3
-    SSL_CTX_set_options(ssl_ctx, SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3);
-
-    // Load certificate and private key
-    if (SSL_CTX_use_certificate_file(ssl_ctx, certFile.c_str(), SSL_FILETYPE_PEM) <= 0)
-    {
-        std::cerr << "Error: Failed to load certificate file: " << certFile << std::endl;
-        ERR_print_errors_fp(stderr);
-        return false;
-    }
-    if (SSL_CTX_use_PrivateKey_file(ssl_ctx, keyFile.c_str(), SSL_FILETYPE_PEM) <= 0)
-    {
-        std::cerr << "Error: Failed to load private key file: " << keyFile << std::endl;
-        ERR_print_errors_fp(stderr);
-        return false;
-    }
-
-    // Verify private key
-    if (!SSL_CTX_check_private_key(ssl_ctx))
-    {
-        std::cerr << "Error: Private key does not match the certificate." << std::endl;
-        ERR_print_errors_fp(stderr);
-        return false;
-    }
-
-    std::cout << "SSL webserver .cer and .key pair loaded successfully" << std::endl;
-
-    return true;
-}
-bool lightweight_cpp_webserver::ssl_handshake()
-{
-    // Perform SSL handshake
-    ssl = SSL_new(ssl_ctx);
-    if (!ssl)
-    {
-        std::cerr << "Error: SSL handshake failed." << std::endl;
-        return false;
-    }
-
-    SSL_set_fd(ssl, newServerSocket);
-    if (SSL_accept(ssl) <= 0)
-    {
-        std::cerr << "Error: SSL handshake failed." << std::endl;
-        return false;
-    }
-
-    std::cout << "SSL handshake successful." << std::endl;
-    return true;
-}
-bool lightweight_cpp_webserver::ssl_read_request()
-{
-    // Read request over SSL connection
-    char buff[30720] = {0};
-    bytesReceived = SSL_read(ssl, buff, BUFFER_SIZE);
-    if (bytesReceived <= 0)
-    {
-        std::cout << "Error: Could not read client request/possible client disconnect" << std::endl;
-        return false;
-    }
-    std::cout << "Read client request successfully over SSL." << std::endl;
-
-    // Process the request
-    // ...
-
-    return true;
-}
 bool lightweight_cpp_webserver::ssl_write_response(const std::string &response)
 {
     // Write response over SSL connection
@@ -538,6 +639,7 @@ bool lightweight_cpp_webserver::ssl_write_response(const std::string &response)
     std::cout << "Sent response over SSL successfully." << std::endl;
     return true;
 }
+
 bool lightweight_cpp_webserver::ssl_shutdown()
 {
     // Shutdown SSL connection

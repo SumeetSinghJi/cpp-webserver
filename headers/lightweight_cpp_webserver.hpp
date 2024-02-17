@@ -18,6 +18,7 @@
 #include <fstream>        // for output file/serving .html files to client browser
 #include <filesystem>     // for getenv for output file to the correct environment
 #include <chrono>         // for timestamping logs
+#include <iomanip>        // for put_time()
 #include <csignal>        // If CTRL+C signal given, perform SSL shutdown
 #include <thread>         // Signal/Handle sleep after cleanup for verbose output
 #include <chrono>         // Signal/Handle sleep after cleanup for verbose output
@@ -89,7 +90,7 @@ public:
 
     void output_logs(const std::string &header);
 
-    void send_response(int socket, const std::string &response);
+    // void send_response(int socket, const std::string &response);
 
     std::string get_requested_page(const std::string &url);
 
@@ -100,6 +101,7 @@ public:
     void serve_error_page(const std::string &statusCode, const std::string &errorPage);
 
     bool ssl_initialise_context(const std::string &certFile, const std::string &keyFile);
+    static void ssl_info_callback(const SSL *ssl, int type, int val);
     bool ssl_handshake();
     bool ssl_read_request();
     bool ssl_write_response(const std::string &response);

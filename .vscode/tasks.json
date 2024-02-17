@@ -2,15 +2,16 @@
     "tasks": [
         {
             "type": "cppbuild",
-            "label": "C/C++: g++.exe build active file",
-            "command": "C:\\msys64\\mingw64\\bin\\g++.exe",
+            "label": "C/C++: clang++.exe build active file", // For MingW use g++.exe
+            "command": "C:\\Program Files\\LLVM\\bin\\clang++.exe", // For MingW use: "C:\\msys64\\mingw64\\bin\\g++.exe", 
             "args": [
                 "-fdiagnostics-color=always",
                 "-I${fileDirname}",
-                "-IC:/Program Files/OpenSSL-Win64/include/openssl", // for OpenSSL
+                "-IC:/Program Files/OpenSSL-Win64/include/openssl", // for OpenSSL, MingW requires the include/subfolder
+                "-IC:/Program Files/OpenSSL-Win64/include", // for Clang: OpenSSL, Clang just points to parent /include
                 "-g",
-                // "${file}", // uncomment for only building main.cpp
-                "${fileDirname}/*.cpp", // uncomment for combining all .cpp files
+                "${file}", // uncomment for only building main.cpp
+                // "${fileDirname}/*.cpp", // uncomment for combining all .cpp files
                 "-o",
                 "${fileDirname}\\${fileBasenameNoExtension}.exe",
                 "-lws2_32",     // <winsock.h>
@@ -21,7 +22,7 @@
                 "cwd": "${fileDirname}"
             },
             "problemMatcher": [
-                "$gcc"
+                "$gcc" // for Clang use gcc regardless it's the built in problem match used by vscode for c++
             ],
             "group": {
                 "kind": "build",

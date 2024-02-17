@@ -84,7 +84,8 @@
             "xhash": "cpp",
             "csignal": "cpp",
             "span": "cpp",
-            "complex": "cpp"
+            "complex": "cpp",
+            "codecvt": "cpp"
         }
     }
 }
