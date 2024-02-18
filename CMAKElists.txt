@@ -22,24 +22,28 @@ if(NOT OpenSSL_FOUND)
 endif()
 
 set(SOURCES
-    main.cpp
-    lightweight_cpp_webserver.cpp
+    src/main.cpp
+    src/lightweight_cpp_webserver.cpp
 )
 
 include_directories(
     headers
     website
-    ${OPENSSL_INCLUDE_DIR}  # Include OpenSSL header directory
 )
 
 add_executable(cpp-webserver ${SOURCES})
 
-if(WIN32)
-    target_link_libraries(cpp-webserver PRIVATE ${OPENSSL_LIBRARIES} Ws2_32)
-else()
-    target_link_libraries(cpp-webserver PRIVATE ${OPENSSL_LIBRARIES})
-endif()
-
-set_target_properties(cpp-webserver PROPERTIES
-    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}
+target_include_directories(cpp-webserver PRIVATE 
+    ${OPENSSL_INCLUDE_DIR}
 )
+
+if(WIN32)
+    target_link_libraries(cpp-webserver PRIVATE 
+        ${OPENSSL_LIBRARIES} 
+        Ws2_32
+        )
+else()
+    target_link_libraries(cpp-webserver PRIVATE 
+        ${OPENSSL_LIBRARIES}
+    )
+endif()

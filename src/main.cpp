@@ -7,7 +7,7 @@
     Description: Read README.md for more details
 */
 
-#include "headers/lightweight_cpp_webserver.hpp" // Declarations file
+#include "../headers/lightweight_cpp_webserver.hpp" // Declarations file
 
 int main()
 {
