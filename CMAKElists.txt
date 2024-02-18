@@ -26,14 +26,11 @@ set(SOURCES
     src/lightweight_cpp_webserver.cpp
 )
 
-include_directories(
-    headers
-    website
-)
-
 add_executable(cpp-webserver ${SOURCES})
 
 target_include_directories(cpp-webserver PRIVATE 
+    headers
+    website
     ${OPENSSL_INCLUDE_DIR}
 )
 
