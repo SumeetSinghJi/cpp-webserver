@@ -2,20 +2,37 @@
     "tasks": [
         {
             "type": "cppbuild",
-            "label": "C/C++: clang++.exe build active file", // MingW: g++.exe
-            "command": "C:/Program Files/LLVM/bin/clang++.exe", // MingW: "C:\\msys64\\mingw64\\bin\\g++.exe", 
+            "label": "C/C++: g++.exe build active file",
+            // Windows MingW uses g++.exe
+            // Windows Clang uses clang++.exe
+            "command": "C:\\msys64\\mingw64\\bin\\g++.exe",
+            // Windows MingW: "C:\\msys64\\mingw64\\bin\\g++.exe",
+            // Windows Clang: "C:/Program Files/LLVM/bin/clang++.exe",
+            // MacOS Clang: 
             "args": [
-                "-fdiagnostics-color=always",
-                "-I${workspaceFolder}/src", // point to main.cpp e.g. under /src
+                // "-fcolor-diagnostics", // Clang
+                // "-fansi-escape-codes", // Clang
                 "-I${workspaceFolder}/src/OpenSSL-Win64/include", // OpenSSL
+                "-I${workspaceFolder}/src/googletest/googletest/include", // Googletest - https://github.com/google/googletest.git
                 "-g",
                 "${fileDirname}/*.cpp",
+                "${workspaceFolder}/src/*.cpp",
+                // "${workspaceFolder}/tests/tests.cpp", // For building tests/tests.cpp
                 "-o",
+                /* STATIC VS DYNAMIC
+                Static libraries (.lib files on Windows, .a files on Unix-like systems)
+                Dynamic/shared libraries (.dll/.dll.a (for linking) files on Windows, .so files on Unix-like systems)
+                to get Static libraries configure library with library specific flag e.g. 
+                Googletest cmake flags: cmake -G "MinGW Makefiles" -Dgtest_build_tests=OFF -DBUILD_SHARED_LIBS=OFF ..
+                */
                 "${workspaceFolder}/src/${fileBasenameNoExtension}.exe",
-                "-L${workspaceFolder}/src/OpenSSL-Win64/lib", // OpenSSL
+                "-LC:/Users/Sumeet/Documents/cpp-webserver/src/OpenSSL-Win64/lib/VC/x64/MD", // Clang: OpenSSL
+                "-L${workspaceFolder}/src/googletest/build/lib", // Google test: Generating STATIC LIB: cmake -G "MinGW Makefiles" -Dgtest_build_tests=OFF -DBUILD_SHARED_LIBS=OFF ..
                 "-lws2_32",     // MinGW: #include <winsock.h>
-                "-lssl",        // MinGW: OpenSSL
-                "-lcrypto",     // MinGW: OpenSSL
+                "-lssl", // MinGW: OpenSSL
+                "-lcrypto", // MinGW: OpenSSL
+                "-lgtest", // Google test
+                "-lgtest_main", // Google test
             ],
             "options": {
                 "cwd": "${fileDirname}"
