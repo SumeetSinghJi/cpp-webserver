@@ -1,39 +1,18 @@
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.10)
 
 project(cpp-webserver)
 
-find_package(OpenSSL QUIET) # QUIET indicates silently continue, REQUIRES means quit if not found
-if(NOT OpenSSL_FOUND)
-    set(OPENSSL_ROOT_DIR "${CMAKE_SOURCE_DIR}/src/OpenSSL-Win64")
-    set(OPENSSL_INCLUDE_DIR "${OPENSSL_ROOT_DIR}/include")
-    if(WIN32)
-        set(OPENSSL_LIBRARIES 
-            "${OPENSSL_ROOT_DIR}/lib/VC/x64/libssl.dll.a"
-            "${OPENSSL_ROOT_DIR}/lib/VC/x64/libcrypto.dll.a")
-    else()
-        set(OPENSSL_LIBRARIES 
-            "${OPENSSL_ROOT_DIR}/lib/libssl.so" 
-            "${OPENSSL_ROOT_DIR}/lib/libcrypto.so")
-    endif()
-endif()
+set(OPENSSL_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/src/OpenSSL-Win64/include")
 
-# Google test Cmake static lib generator: cmake -G "MinGW Makefiles" -Dgtest_build_tests=OFF -DBUILD_SHARED_LIBS=OFF ..
-# generates 4 libs below
-# libgtest_main.a
-# libgtest.a
-# libgmock_main.a
-# libgmock.a
-
-set(SOURCES
-    src/main.cpp
-    src/lightweight_cpp_webserver.cpp
+set(OPENSSL_LIBRARIES
+    "${CMAKE_SOURCE_DIR}/src/OpenSSL-Win64/lib/VC/x64/MD/libcrypto.lib" # -lcrypto
+    "${CMAKE_SOURCE_DIR}/src/OpenSSL-Win64/lib/VC/x64/MD/libssl_static.lib" # -lssl
 )
 
-#get_cmake_property(_variableNames VARIABLES)
-#list (SORT _variableNames)
-#foreach (_variableName ${_variableNames})
-#    message(STATUS "${_variableName}=${${_variableName}}")
-#endforeach()
+set(SOURCES
+    main.cpp
+    src/lightweight_cpp_webserver.cpp
+)
 
 add_executable(cpp-webserver ${SOURCES})
 
@@ -44,13 +23,8 @@ target_include_directories(cpp-webserver PRIVATE
     ${OPENSSL_INCLUDE_DIR}
 )
 
-if(WIN32)
-    target_link_libraries(cpp-webserver PRIVATE 
-        ${OPENSSL_LIBRARIES} 
-        Ws2_32
-        )
-else()
-    target_link_libraries(cpp-webserver PRIVATE 
-        ${OPENSSL_LIBRARIES}
-    )
-endif()
+target_link_libraries(cpp-webserver PRIVATE 
+    ${OPENSSL_LIBRARIES}
+    Ws2_32
+)
+

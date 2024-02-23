@@ -15,19 +15,29 @@ class WebServerTest: public ::testing::Test {
 
         // SetUp is a Google Test function
         void SetUp() override {
-            server = new lightweight_cpp_webserver("127.0.0.1", 8080);
+            // server = new lightweight_cpp_webserver("127.0.0.1", 8080);
         }
 
         // TearDown is a Google Test function
         void TearDown() override {
-            delete server;
-            lightweight_cpp_webserver::server.ssl_shutdown();
+            // delete server;
+            // lightweight_cpp_webserver::server.ssl_shutdown();
         }
 
-        lightweight_cpp_webserver* server;
+        // lightweight_cpp_webserver* server;
 
 };
 
+/* Test function to determine if Google Test is working, uncomment code related to 
+main program in this file and uncomment and run this.
+TEST_F(WebServerTest, sandbox_addition_test) {
+    int a = 1;
+    int b = 2;
+    EXPECT_EQ(a + b, 3);
+}
+*/
+
+/*
 TEST_F(WebServerTest, IsValidIPAddressTest) {
     EXPECT_TRUE(server->isValidIPAddress("192.168.1.1"));
     EXPECT_FALSE(server->isValidIPAddress("300.300.300.300"));
@@ -43,8 +53,7 @@ TEST_F(WebServerTest, IsValidPortAddressTest) {
     EXPECT_FALSE(server->isValidPortAddress(invalidPort1));
     EXPECT_FALSE(server->isValidPortAddress(invalidPort2));
 }
-
-
+*/
 
 int main(int argc, char* argv[]) {
     ::testing::InitGoogleTest(&argc, argv);

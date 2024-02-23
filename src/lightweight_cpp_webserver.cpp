@@ -449,23 +449,9 @@ void lightweight_cpp_webserver::output_logs(const std::string &header)
 
     // Determine the platform-specific file path separator
     std::string filepath_separator;
-#ifdef _WIN32
-    filepath_separator = '\\';
-    char* env_value = nullptr;
-    size_t len = 0;
-    errno_t err = _dupenv_s(&env_value, &len, "USERPROFILE");
-    if (err == 0 && env_value != nullptr) {
-        home_directory = env_value;
-        free(env_value); // free memory allocated by _dupenv_s
-    } else {
-        // handle error
-        std::cerr << "Error: Unable to get USERPROFILE environment variable." << std::endl;
-        return;
-    }
-#else
+
     filepath_separator = '/';
     home_directory = getenv("HOME");
-#endif
 
     // Construct the log file path
     std::string logPath = home_directory + filepath_separator + "logs.txt";
@@ -479,17 +465,8 @@ void lightweight_cpp_webserver::output_logs(const std::string &header)
     // Check if the file is successfully opened
     if (outputFile.is_open())
     {
-#ifdef _WIN32
-        struct tm timeinfo;
-        localtime_s(&timeinfo, &currentTime);
-        char timeBuffer[80];
-        strftime(timeBuffer, sizeof(timeBuffer), "%Y-%m-%d %H:%M:%S", &timeinfo);
-        // Write the timestamp, client IP, and header to the file
-        outputFile << "[" << timeBuffer << "] "
-#else
         // Write the timestamp, client IP, and header to the file
         outputFile << "[" << std::put_time(std::localtime(&currentTime), "%Y-%m-%d %H:%M:%S") << "] "
-#endif
                    << "Client IP: " << clientIPAddress << " | "
                    << header << std::endl;
 

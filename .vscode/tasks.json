@@ -17,20 +17,17 @@
                 "-g",
                 "${fileDirname}/*.cpp",
                 "${workspaceFolder}/src/*.cpp",
-                // "${workspaceFolder}/tests/tests.cpp", // For building tests/tests.cpp
                 "-o",
                 /* STATIC VS DYNAMIC
                 Static libraries (.lib files on Windows, .a files on Unix-like systems)
-                Dynamic/shared libraries (.dll/.dll.a (for linking) files on Windows, .so files on Unix-like systems)
-                to get Static libraries configure library with library specific flag e.g. 
-                Googletest cmake flags: cmake -G "MinGW Makefiles" -Dgtest_build_tests=OFF -DBUILD_SHARED_LIBS=OFF ..
+                Dynamic libraries (.dll/.dll.a (for linking) files on Windows, .so files on Unix-like systems)
                 */
-                "${workspaceFolder}/src/${fileBasenameNoExtension}.exe",
-                "-LC:/Users/Sumeet/Documents/cpp-webserver/src/OpenSSL-Win64/lib/VC/x64/MD", // Clang: OpenSSL
+                "${workspaceFolder}/${fileBasenameNoExtension}.exe",
+                "-L${workspaceFolder}/src/OpenSSL-Win64/lib/VC/x64/MD", //  OpenSSL
                 "-L${workspaceFolder}/src/googletest/build/lib", // Google test: Generating STATIC LIB: cmake -G "MinGW Makefiles" -Dgtest_build_tests=OFF -DBUILD_SHARED_LIBS=OFF ..
-                "-lws2_32",     // MinGW: #include <winsock.h>
-                "-lssl", // MinGW: OpenSSL
-                "-lcrypto", // MinGW: OpenSSL
+                "-lws2_32", // #include <winsock.h>
+                "-lssl", // OpenSSL
+                "-lcrypto", //OpenSSL
                 "-lgtest", // Google test
                 "-lgtest_main", // Google test
             ],
@@ -38,7 +35,7 @@
                 "cwd": "${fileDirname}"
             },
             "problemMatcher": [
-                "$gcc" // MingW/Clang: "$gcc"
+                "$gcc" // Both MingW/Clang use "$gcc"
             ],
             "group": {
                 "kind": "build",

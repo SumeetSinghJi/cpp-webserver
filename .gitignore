@@ -1,3 +1,4 @@
 # Build folders
 /build
 /testing/build
+/src/openssl
