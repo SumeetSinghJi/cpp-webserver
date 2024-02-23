@@ -23,7 +23,7 @@
                 Dynamic libraries (.dll/.dll.a (for linking) files on Windows, .so files on Unix-like systems)
                 */
                 "${workspaceFolder}/${fileBasenameNoExtension}.exe",
-                "-L${workspaceFolder}/src/OpenSSL-Win64/lib/VC/x64/MD", //  OpenSSL
+                // "-L${workspaceFolder}/src/OpenSSL-Win64/lib", //  OpenSSL
                 "-L${workspaceFolder}/src/googletest/build/lib", // Google test: Generating STATIC LIB: cmake -G "MinGW Makefiles" -Dgtest_build_tests=OFF -DBUILD_SHARED_LIBS=OFF ..
                 "-lws2_32", // #include <winsock.h>
                 "-lssl", // OpenSSL
