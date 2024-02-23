@@ -15,15 +15,15 @@
                 "-I${workspaceFolder}/src/OpenSSL-Win64/include", // OpenSSL
                 "-I${workspaceFolder}/src/googletest/googletest/include", // Googletest - https://github.com/google/googletest.git
                 "-g",
-                "${fileDirname}/*.cpp",
-                "${workspaceFolder}/src/*.cpp",
+                "${fileDirname}/*.cpp", // Targets current active file to build
+                "${workspaceFolder}/src/*.cpp", // Includes any source .cpp files together with above
                 "-o",
                 /* STATIC VS DYNAMIC
                 Static libraries (.lib files on Windows, .a files on Unix-like systems)
                 Dynamic libraries (.dll/.dll.a (for linking) files on Windows, .so files on Unix-like systems)
                 */
                 "${workspaceFolder}/${fileBasenameNoExtension}.exe",
-                // "-L${workspaceFolder}/src/OpenSSL-Win64/lib", //  OpenSSL
+                "-L${workspaceFolder}/src/OpenSSL-Win64/lib", //  OpenSSL
                 "-L${workspaceFolder}/src/googletest/build/lib", // Google test: Generating STATIC LIB: cmake -G "MinGW Makefiles" -Dgtest_build_tests=OFF -DBUILD_SHARED_LIBS=OFF ..
                 "-lws2_32", // #include <winsock.h>
                 "-lssl", // OpenSSL
