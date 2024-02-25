@@ -101,7 +101,6 @@ public:
     void serve_error_page(const std::string &statusCode, const std::string &errorPage);
 
     bool ssl_initialise_context(const std::string &certFile, const std::string &keyFile);
-    static void ssl_info_callback(const SSL *ssl, int type, int val);
     bool ssl_handshake();
     bool ssl_read_request();
     bool ssl_write_response(const std::string &response);

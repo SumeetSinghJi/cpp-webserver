@@ -123,19 +123,6 @@ bool lightweight_cpp_webserver::is_valid_port_address(int &portNumber)
     return false;
 };
 
-void lightweight_cpp_webserver::ssl_info_callback(const SSL *ssl, int type, int val)
-{
-    const char *desc = SSL_alert_desc_string_long(val);
-    const char *alert_type = SSL_alert_type_string_long(val);
-
-    if (!desc)
-        desc = "unknown";
-    if (!alert_type)
-        alert_type = "unknown";
-
-    std::cerr << "SSL info: " << alert_type << " - " << desc << std::endl;
-}
-
 bool lightweight_cpp_webserver::ssl_initialise_context(const std::string &certFile, const std::string &keyFile)
 {
     // Initialize OpenSSL
@@ -176,9 +163,6 @@ bool lightweight_cpp_webserver::ssl_initialise_context(const std::string &certFi
         return false;
     }
 
-    // Set the custom info callback
-    SSL_CTX_set_info_callback(ssl_ctx, ssl_info_callback);
-
     std::cout << "SSL webserver .cer and .key pair loaded successfully" << std::endl;
 
     return true;
@@ -209,16 +193,13 @@ bool lightweight_cpp_webserver::initialise_web_server()
     // bind socket to address
     server.sin_family = AF_INET;
 
-
-    #ifdef _WIN32
+#ifdef _WIN32
     // For Windows, use InetPton() instead of inet_addr()
     inet_pton(AF_INET, webserverIPAddress.c_str(), &server.sin_addr);
 #else
     // For other platforms, continue using inet_addr() as before
     server.sin_addr.s_addr = inet_addr(webserverIPAddress.c_str());
 #endif
-
-
 
     server.sin_port = htons(webserverPortNumber);
     server_len = sizeof(server);
@@ -373,25 +354,34 @@ bool lightweight_cpp_webserver::ssl_handshake()
     int handshakeResult = SSL_accept(ssl);
     if (handshakeResult <= 0)
     {
+        // Print SSL error message
+        std::cerr << "Error: SSL handshake failed - SSL error: " << ERR_error_string(ERR_get_error(), nullptr) << std::endl;
+
+        // Print SSL error code
+        std::cerr << "Error: SSL handshake failed - SSL error code: " << ERR_get_error() << std::endl;
+
+        // Print OpenSSL error stack
+        ERR_print_errors_fp(stderr);
+
         int sslError = SSL_get_error(ssl, handshakeResult);
         switch (sslError)
         {
-            case SSL_ERROR_WANT_READ:
-                std::cerr << "Error: SSL handshake failed - Want Read." << std::endl;
-                break;
-            case SSL_ERROR_WANT_WRITE:
-                std::cerr << "Error: SSL handshake failed - Want Write." << std::endl;
-                break;
-            case SSL_ERROR_SSL:
-                std::cerr << "Error: SSL handshake failed - SSL error." << std::endl;
-                break;
-            case SSL_ERROR_SYSCALL:
-                std::cerr << "Error: SSL handshake failed - System call error: ";
-                perror("");
-                break;
-            default:
-                std::cerr << "Error: SSL handshake failed - Unknown error." << std::endl;
-                break;
+        case SSL_ERROR_WANT_READ:
+            std::cerr << "Error: SSL handshake failed - Want Read." << std::endl;
+            break;
+        case SSL_ERROR_WANT_WRITE:
+            std::cerr << "Error: SSL handshake failed - Want Write." << std::endl;
+            break;
+        case SSL_ERROR_SSL:
+            std::cerr << "Error: SSL handshake failed - SSL error." << std::endl;
+            break;
+        case SSL_ERROR_SYSCALL:
+            std::cerr << "Error: SSL handshake failed - System call error: ";
+            perror("");
+            break;
+        default:
+            std::cerr << "Error: SSL handshake failed - Unknown error." << std::endl;
+            break;
         }
         ERR_print_errors_fp(stderr); // Print OpenSSL error stack
         return false;
@@ -663,25 +653,28 @@ void lightweight_cpp_webserver::signal_handler(int signum)
 #endif
 }
 
-void lightweight_cpp_webserver::default_string_initialisation_inputs(const std::string& defaultValue)
+void lightweight_cpp_webserver::default_string_initialisation_inputs(const std::string &defaultValue)
 {
     std::string userInput;
     std::getline(std::cin, userInput);
     if (!userInput.empty())
     {
-        if (defaultValue == "webserverIPAddress") {
+        if (defaultValue == "webserverIPAddress")
+        {
             set_IP_address(userInput);
         }
-        else if (defaultValue == "WebsiteFolderName") {
+        else if (defaultValue == "WebsiteFolderName")
+        {
             set_website_directory(userInput);
         }
-        else if (defaultValue == "websiteIndexFile") {
+        else if (defaultValue == "websiteIndexFile")
+        {
             set_website_index(userInput);
         }
-        else if (defaultValue == "webserverPortNumber") {
+        else if (defaultValue == "webserverPortNumber")
+        {
             set_port_number(std::stoi(userInput));
         }
     }
     std::cin.clear();
 }
-

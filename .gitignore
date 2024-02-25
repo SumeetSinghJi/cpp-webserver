@@ -1,4 +1,8 @@
 # Build folders
 /build
-/testing/build
-/src/openssl
+/src/googletest/.github
+/src/googletest/ci
+/src/googletest/docs
+/src/googletest/googlemock
+/src/OpenSSL-Win64/exp
+/src/OpenSSL-Win64/tests
