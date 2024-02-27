@@ -25,6 +25,6 @@ target_include_directories(cpp-webserver PRIVATE
 
 target_link_libraries(cpp-webserver PRIVATE 
     ${OPENSSL_LIBRARIES}
-    Ws2_32
+    Ws2_32 # for #include <winsock.h>
 )
 
