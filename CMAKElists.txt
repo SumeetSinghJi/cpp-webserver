@@ -2,20 +2,22 @@ cmake_minimum_required(VERSION 3.10)
 
 project(cpp-webserver)
 
-set(OPENSSL_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/src/OpenSSL-Win64/include")
-
-set(OPENSSL_LIBRARIES
-    "${CMAKE_SOURCE_DIR}/src/OpenSSL-Win64/lib/VC/x64/MD/libcrypto.lib" # -lcrypto
-    "${CMAKE_SOURCE_DIR}/src/OpenSSL-Win64/lib/VC/x64/MD/libssl_static.lib" # -lssl
-)
-
+# Define sources
 set(SOURCES
     main.cpp
     src/lightweight_cpp_webserver.cpp
 )
 
+set(OPENSSL_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/src/OpenSSL-Win64/include")
+set(OPENSSL_LIBRARIES 
+    "${CMAKE_SOURCE_DIR}/src/OpenSSL-Win64/lib/VC/x64/MD/libssl.lib"
+    "${CMAKE_SOURCE_DIR}/src/OpenSSL-Win64/lib/VC/x64/MD/libcrypto.lib"
+)
+
+# Add executable
 add_executable(cpp-webserver ${SOURCES})
 
+# Include directories
 target_include_directories(cpp-webserver PRIVATE 
     headers
     website
@@ -23,8 +25,14 @@ target_include_directories(cpp-webserver PRIVATE
     ${OPENSSL_INCLUDE_DIR}
 )
 
+# Link libraries
 target_link_libraries(cpp-webserver PRIVATE 
     ${OPENSSL_LIBRARIES}
     Ws2_32 # for #include <winsock.h>
+    stdc++ # Link against the standard C++ library, required for Curl/OpenSSL related code for some reason
 )
 
+set_target_properties(cpp-webserver PROPERTIES 
+    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR} # output .exe to "./"
+    OUTPUT_NAME "main" # rename file to main.exe
+) 
