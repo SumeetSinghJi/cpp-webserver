@@ -19,9 +19,12 @@ add_executable(cpp-webserver ${SOURCES})
 
 # Include directories
 target_include_directories(cpp-webserver PRIVATE 
-    headers
-    website
-    keys
+    # headers
+    # website
+    # keys
+    "${CMAKE_CURRENT_SOURCE_DIR}/headers"
+    "${CMAKE_CURRENT_SOURCE_DIR}/website"
+    "${CMAKE_CURRENT_SOURCE_DIR}/keys"
     ${OPENSSL_INCLUDE_DIR}
 )
 
@@ -29,7 +32,7 @@ target_include_directories(cpp-webserver PRIVATE
 target_link_libraries(cpp-webserver PRIVATE 
     ${OPENSSL_LIBRARIES}
     Ws2_32 # for #include <winsock.h>
-    stdc++ # Link against the standard C++ library, required for Curl/OpenSSL related code for some reason
+    stdc++ # C++ Standard library, required if your main.cpp has it's #includes in another header
 )
 
 set_target_properties(cpp-webserver PROPERTIES 

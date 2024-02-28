@@ -1,8 +1,15 @@
 # Build folders
 /build
-/src/googletest/.github
-/src/googletest/ci
-/src/googletest/docs
-/src/googletest/googlemock
+/tests/build
+/src/googletest/.github/
+/src/googletest/ci/
+/src/googletest/docs/
+/src/googletest/googlemock/
 /src/OpenSSL-Win64/exp
 /src/OpenSSL-Win64/tests
+/src/asio/.github/
+/src/asio/doc/
+/src/asio/example/
+/src/asio/meta/
+/src/asio/test/
+/src/asio/tools/
