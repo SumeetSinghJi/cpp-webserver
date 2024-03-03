@@ -15,7 +15,8 @@
                 "-I${workspaceFolder}/src/OpenSSL-Win64/include", // OpenSSL
                 "-I${workspaceFolder}/src/googletest/googletest/include", // Googletest - https://github.com/google/googletest.git
                 "-g",
-                "${fileDirname}/*.cpp", // Targets current active file to build
+                "${file}",
+                // "${fileDirname}/*.cpp", // Targets current active file to build
                 "${workspaceFolder}/src/*.cpp", // Includes any source .cpp files together with above
                 "-o",
                 "${workspaceFolder}/${fileBasenameNoExtension}.exe",

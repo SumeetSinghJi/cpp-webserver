@@ -184,8 +184,8 @@ bool lightweight_cpp_webserver::initialise_web_server()
     // AF_INET - IPV4 (Domain)
     // SOCK_STREAM - Asynchronous, Full-duplex (Type)
     // IPPROTO_TCP - TCP (Protocol)
-    serverSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-    if (serverSocket == INVALID_SOCKET)
+    webserverSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    if (webserverSocket == INVALID_SOCKET)
     {
         std::cout << "Error: Could not create a web socket" << std::endl;
     }
@@ -210,21 +210,21 @@ bool lightweight_cpp_webserver::initialise_web_server()
         bind() checks if the initialised IP and Port number listed can be assigned by the Operating System
         e.g; lightweight_cpp_webserver server("127.0.0.1", 8080);
     */
-    if (bind(serverSocket, (SOCKADDR *)&server, server_len) != 0)
+    if (bind(webserverSocket, (SOCKADDR *)&server, server_len) != 0)
     {
         std::cout << "Error: Could not bind IP address: " << webserverIPAddress << ":" << webserverPortNumber << " to web server, web socket" << std::endl;
     }
 
     // Get the actual port number chosen by the OS after bind()
-    if (getsockname(serverSocket, (SOCKADDR *)&server, &server_len) == -1)
+    if (getsockname(webserverSocket, (SOCKADDR *)&server, &server_len) == -1)
     {
         std::cout << "Error: Could not get actual port number" << std::endl;
-        closesocket(serverSocket);
+        closesocket(webserverSocket);
         return false;
     }
 
     // listen is another check after getsockname()
-    if (listen(serverSocket, 20) != 0) // (serverSocket, 20) = 20 concurrent client connections
+    if (listen(webserverSocket, 20) != 0) // (webserverSocket, 20) = 20 concurrent client connections
     {
         std::cout << "Error: Could not listen to anything on server address: " << webserverIPAddress << ":" << webserverPortNumber << std::endl;
     }
@@ -245,7 +245,7 @@ bool lightweight_cpp_webserver::run_web_server()
         // Perform SSL handshake
         if (!ssl_handshake())
         {
-            closesocket(newServerSocket);
+            closesocket(clientSocket);
             continue;
         }
 
@@ -254,7 +254,7 @@ bool lightweight_cpp_webserver::run_web_server()
         if (!read_and_validate_headers(headers))
         {
             ssl_shutdown(); // Shutdown SSL connection
-            closesocket(newServerSocket);
+            closesocket(clientSocket);
             continue;
         }
 
@@ -262,7 +262,7 @@ bool lightweight_cpp_webserver::run_web_server()
         if (!ssl_read_request())
         {
             ssl_shutdown(); // Shutdown SSL connection
-            closesocket(newServerSocket);
+            closesocket(clientSocket);
             continue;
         }
 
@@ -289,16 +289,16 @@ bool lightweight_cpp_webserver::run_web_server()
         // Shutdown SSL connection
         if (!ssl_shutdown())
         {
-            closesocket(newServerSocket);
+            closesocket(clientSocket);
             continue;
         }
 
-        closesocket(newServerSocket);
+        closesocket(clientSocket);
         std::cout << "Closing browser response socket successfully." << std::endl;
     }
 
     // Close the server socket
-    closesocket(serverSocket);
+    closesocket(webserverSocket);
 
 #ifdef _WIN32
     // Cleanup Winsock if on Windows
@@ -313,15 +313,15 @@ bool lightweight_cpp_webserver::run_web_server()
 bool lightweight_cpp_webserver::accept_client_request()
 {
 #ifdef _WIN32
-    newServerSocket = accept(serverSocket, (SOCKADDR *)&server, &server_len);
+    clientSocket = accept(webserverSocket, (SOCKADDR *)&server, &server_len);
 #else
-    newServerSocket = accept(serverSocket, (struct sockaddr *)&server, &server_len);
+    clientSocket = accept(webserverSocket, (struct sockaddr *)&server, &server_len);
 #endif
-    if (newServerSocket == INVALID_SOCKET)
+    if (clientSocket == INVALID_SOCKET)
     {
         std::cout << "Error: Unable to accept client request: \n"
                   << std::endl;
-        closesocket(serverSocket);
+        closesocket(webserverSocket);
 #ifdef _WIN32
         WSACleanup();
 #endif
@@ -348,7 +348,7 @@ bool lightweight_cpp_webserver::ssl_handshake()
         return false;
     }
 
-    SSL_set_fd(ssl, newServerSocket);
+    SSL_set_fd(ssl, clientSocket);
 
     // Initiate SSL handshake
     int handshakeResult = SSL_accept(ssl);
@@ -395,7 +395,7 @@ bool lightweight_cpp_webserver::read_and_validate_headers(std::vector<std::strin
 {
     // Read and validate headers
     char buff[30720] = {0};
-    bytesReceived = recv(newServerSocket, buff, BUFFER_SIZE, 0);
+    bytesReceived = recv(clientSocket, buff, BUFFER_SIZE, 0);
     if (bytesReceived < 0)
     {
         std::cout << "Error: Could not read client request/possible client disconnect" << std::endl;
@@ -433,6 +433,7 @@ bool lightweight_cpp_webserver::read_and_validate_headers(std::vector<std::strin
     // end security - XSS header validation sanitizing
     return true;
 }
+
 void lightweight_cpp_webserver::output_logs(const std::string &header)
 {
     std::string home_directory = "";
@@ -551,11 +552,11 @@ void lightweight_cpp_webserver::handle_static_file_request(const std::string &re
                                std::to_string(fileContent.size()) + "\n\n" + fileContent;
 
         // Send the static file as the response over SSL connection
-        // send_response(newServerSocket, errorResponse);
+        // send_response(clientSocket, errorResponse);
         if (!ssl_write_response(response))
         {
             ssl_shutdown(); // Shutdown SSL connection
-            closesocket(newServerSocket);
+            closesocket(clientSocket);
             return;
         }
 
@@ -599,11 +600,11 @@ void lightweight_cpp_webserver::serve_error_page(const std::string &statusCode, 
                                     std::to_string(errorFileContent.size()) + "\n\n" + errorFileContent;
 
         // Send the error page as the response
-        // send_response(newServerSocket, errorResponse);
+        // send_response(clientSocket, errorResponse);
         if (!ssl_write_response(errorResponse))
         {
             ssl_shutdown(); // Shutdown SSL connection
-            closesocket(newServerSocket);
+            closesocket(clientSocket);
             return;
         }
         std::cout << "Finished sending response " + errorPage + " to Client browser." << std::endl;
@@ -645,7 +646,7 @@ void lightweight_cpp_webserver::signal_handler(int signum)
         serverInstance->ssl_shutdown();
     }
     // Close the server socket
-    closesocket(serverInstance->serverSocket);
+    closesocket(serverInstance->webserverSocket);
 
 #ifdef _WIN32
     // Cleanup Winsock if on Windows

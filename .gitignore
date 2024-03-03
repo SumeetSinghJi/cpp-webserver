@@ -1,5 +1,6 @@
 # Build folders
 /build
+/src/boost
 /tests/build
 /src/googletest/.github/
 /src/googletest/ci/

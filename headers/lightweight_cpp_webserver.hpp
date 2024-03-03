@@ -37,12 +37,12 @@ class lightweight_cpp_webserver
 {
 private:
 #ifdef _WIN32
-    SOCKET serverSocket;
-    SOCKET newServerSocket;
+    SOCKET webserverSocket;
+    SOCKET clientSocket;
     WSADATA wsaData;
 #else
-    int serverSocket;
-    int newServerSocket;
+    int webserverSocket;
+    int clientSocket;
 #endif
 
     struct sockaddr_in server;
