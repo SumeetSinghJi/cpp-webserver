@@ -8,8 +8,14 @@
     build from this Youtube tutorial: https://www.youtube.com/watch?v=14ZFKR-tFMU&list=PLhnN2F9NiVmAMn9iGB_Rtjs3aGef3GpSm&index=3
 */
 
+/* TO DO
+1. add SSL using OpenSSL key cert
+*/
+
 #include <iostream>
 #include <string>
+#include <chrono>  // for time output
+#include <iomanip> // for put_time to cout time_t variable
 
 #ifdef _WIN32
 #include <winsock2.h>
@@ -29,9 +35,49 @@ int webserverFunctionReturnValue = 0;
 fd_set fr, fw, fe; // file/socket descriptors to read to network/write to network/errors
 int nMaxFd;
 int arrayClientConnections[5]; // handle max 5 clients
+std::string clientIPAddress = "";
+
+void process_new_message(int clientSocket)
+{
+    std::cout << "Processing the new message for client socket: " << clientSocket << std::endl;
+    char buff[256 + 1] = {
+        0,
+    };
+    int webserverFunctionReturnValue = recv(clientSocket, buff, 256, 0);
+    if (webserverFunctionReturnValue < 0)
+    {
+        std::cout << "Error processing client message: " << std::endl;
+        closesocket(clientSocket);
+        for (int x = 1; x < 5; x++)
+        {
+            if (arrayClientConnections[x] == clientSocket)
+            {
+                arrayClientConnections[x] = 0;
+                break;
+            }
+        }
+    }
+    else
+    {
+        std::cout << "Message received from client is: " << std::endl;
+        // send response to the client
+        send(clientSocket, "Processed your request", 23, 0);
+        std::cout << "*******************************************" << std::endl;
+    }
+}
 
 void process_client_request()
 {
+    // Get the current time
+    auto currentTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+    std::cout << std::put_time(std::localtime(&currentTime), "%Y-%m-%d %H-%M-%S") << std::endl;
+
+    // Extract client IP address
+    char clientIPAddressChar[INET_ADDRSTRLEN];
+    inet_ntop(AF_INET, &(webServer.sin_addr), clientIPAddressChar, INET_ADDRSTRLEN);
+    clientIPAddress = std::string(clientIPAddressChar);
+    std::cout << "Client IP address is: " << clientIPAddress << std::endl;
+
     // new client connection request
     if (FD_ISSET(webServerSocket, &fr))
     {
@@ -54,6 +100,19 @@ void process_client_request()
             if (x == 5)
             {
                 std::cout << "No more space for a new client connection. Max is: " << sizeof(arrayClientConnections) << std::endl;
+            }
+        }
+    }
+    else // Client already established socket connection above, then process the next message
+    {
+        for (int x = 0; x < 5; x++)
+        {
+            if (FD_ISSET(arrayClientConnections[x], &fr))
+            {
+                // Got the new message from the client
+                // Just recev new message
+                // just queue message for new worker of webserver to full fill
+                process_new_message(arrayClientConnections[x]);
             }
         }
     }
@@ -108,7 +167,7 @@ int main()
         std::cout << "Successfully initialised this local web server with IP address: " << webServerIP << std::endl;
     }
 
-    // On server restart/failure this code SO_REUSEADDR will rebind the socket back to webserver
+    // On server restart/failure this code SO_REUSEADDR will rebind the socket back to webserver]
     int webserverOptVal = 0;
     int webserverOptLen = sizeof(webserverOptVal);
     webserverFunctionReturnValue = setsockopt(webServerSocket, SOL_SOCKET, SO_REUSEADDR, (const char *)&webserverOptVal, webserverOptLen);
@@ -149,6 +208,8 @@ int main()
         std::cout << "Successfully started listen() on local web server port" << std::endl;
     }
 
+    std::cout << "\nStep 6: Keep waiting for new requests and proceed as per request" << std::endl;
+
     nMaxFd = webServerSocket;
     struct timeval timeoutValue;
     timeoutValue.tv_sec = 1;
@@ -163,17 +224,20 @@ int main()
         FD_SET(webServerSocket, &fr);
         FD_SET(webServerSocket, &fe);
 
-        for (int x = 0; x > 5; x++) {
-            if (arrayClientConnections[x] != 0) {
+        for (int x = 0; x > 5; x++)
+        {
+            if (arrayClientConnections[x] != 0)
+            {
+                // will contain new socket descriptor to send and recieve messages with the client
                 FD_SET(arrayClientConnections[x], &fr);
+                // These sockets can also throw some errors
                 FD_SET(arrayClientConnections[x], &fe);
             }
         }
 
-        std::cout << "\nStep 6: Keep waiting for new requests and proceed as per request" << std::endl;
-
         // Wait one second to see if file descriptors on sockets contain anything
         webserverFunctionReturnValue = select(nMaxFd + 1, &fr, &fr, &fe, &timeoutValue);
+
         if (webserverFunctionReturnValue > 0) // if number > 0 then their is a socket descriptor with something in it/to do
         {
             // connection/communication request made to local web server

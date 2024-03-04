@@ -12,6 +12,8 @@
 #include <string>
 #include <chrono> // program sleep 1 second while attempting to connect to web server
 #include <thread> // program sleep 1 second while attempting to connect to web server
+#include <openssl/ssl.h> // for SSL
+#include <openssl/err.h> // for SSL
 
 #ifdef _WIN32
 #include <winsock2.h>
@@ -64,16 +66,24 @@ int main()
         if (clientFunctionReturnValue < 0)
         {
             std::cout << "Error: Connection failed" << std::endl;
-            // WSACleanup();
-            // return 1;
         }
         else
-        {
+        {   // connect to the server for the first time
             std::cout << "Connected to the web server" << std::endl;
             recv(clientSocket, buff, 255, 0);
             std::cout << "Press any key to see message received from server" << std::endl;
-            std::cin.get();
+            std::getchar(); // press any button to go to next line and print out buff from webserver send()
             std::cout << buff << std::endl;
+            std::cout << "Now send your messages to the server: " << std::endl;
+            while (true) {
+                // once connected to the webserver start sending messages
+                fgets(buff, 256, stdin); // take a string from the keyboard
+                send(clientSocket, buff, 256, 0); // then send that string to process_new_message(int clientSocket) recv()
+                std::cout << "Press any key to get the response from server: " << std::endl;
+                std::getchar();
+                recv(clientSocket, buff, 256, 0); // message that web server received message sent back from process_new_message(int clientSocket) send()
+                std::cout << "Now send the next message: " << std::endl;
+            }
         }
         std::this_thread::sleep_for(std::chrono::seconds(1));
     }
